@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neural Networks Playbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday learning: a calm, exact study bench
+   IDEA a lab instrument: every concept has a live readout you can turn the knobs on
+   PICTURE a network training in the browser, its decision boundary forming in real time
+   COLOUR aluminium ground, black ink, one orange pointer colour for class 1 and emphasis; night #141517
+   TYPE Geist 600 for titles and readouts, Geist for text, Geist Mono for code and formulas
+   LAYOUT laptop: title across the top, trainer canvas left and controls right; phone: title, canvas, controls */
+:root{color-scheme:light dark;--bg:light-dark(#e9eaec,#141517);--panel:light-dark(#f7f7f8,#1c1e21);--ink:light-dark(#111214,#ecedef);--muted:light-dark(#545860,#a2a6ad);--line:light-dark(#c6c9ce,#34373c);--acc:#ff4f00;--accInk:light-dark(#c93d00,#ff7a3d);--c0:light-dark(#1d2430,#cfd5df);--code:light-dark(#ffffff,#101113)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:64px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Geist,system-ui,-apple-system,Segoe UI,sans-serif;overflow-x:clip}
+h1,h2,h3{line-height:1.08;letter-spacing:-.02em;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,52px);font-weight:600}
+h2{font-size:clamp(26px,3.4vw,36px);font-weight:600}
+h3{font-size:20px;font-weight:600;margin:28px 0 8px}
+p{margin:0 0 14px}
+a{color:var(--accInk)}
+.band{padding-block:clamp(28px,4vw,56px);padding-inline:max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+.lead{font-size:18px;color:var(--muted);max-width:62ch;margin-top:12px}
+.hero{padding-bottom:28px}
+.bench{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:20px;margin-top:24px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.fig{position:relative;min-height:340px}
+.fig>svg,.fig>canvas{position:absolute;inset:0;width:100%;height:100%}
+#board{min-height:440px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--panel)}
+.readouts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.ro{border-bottom:2px solid var(--line);padding-bottom:6px}
+.ro b{display:block;font-size:clamp(20px,2.4vw,28px);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ro span{font-size:13px;color:var(--muted)}
+.ro.hot{border-color:var(--acc)}
+.ctl{display:grid;grid-template-columns:7.5em minmax(0,1fr) 4.2em;align-items:center;gap:10px;margin:8px 0}
+.ctl label{font-size:14px;color:var(--muted)}
+.ctl output{font:500 14px Geist Mono,monospace;text-align:right;white-space:nowrap}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--line);border-radius:2px}
+input[type=range]::-moz-range-track{height:4px;background:var(--line);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--acc);margin-top:-7px;border:2px solid var(--panel)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--acc);border:2px solid var(--panel)}
+input[type=range]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+select,input[type=number],input[type=text]{font:16px Geist,system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:44px;width:100%}
+button{font:500 15px Geist,system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:0 14px;min-height:44px;cursor:pointer}
+button:hover{border-color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button.main{background:var(--acc);border-color:var(--acc);color:#fff}
+button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto}
+.small{font-size:13px;color:var(--muted)}
+.spark{height:70px;min-height:70px;margin-top:10px}
+nav.toc{background:var(--ink);color:var(--bg)}
+nav.toc .wrap{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:8px max(5vw,16px)}
+nav.toc a{flex:none;color:var(--bg);text-decoration:none;font-size:14px;padding:8px 10px;border-radius:6px;white-space:nowrap}
+nav.toc a:hover,nav.toc a.on{background:color-mix(in srgb,var(--bg) 16%,transparent)}
+nav.toc a.done::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--acc);margin-left:6px;vertical-align:middle}
+.meter{flex:none;display:flex;align-items:center;gap:8px;font-size:13px;margin-left:auto;padding-left:12px;white-space:nowrap}
+.meter i{display:block;width:90px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--bg) 25%,transparent);overflow:hidden}
+.meter i b{display:block;height:100%;width:0;background:var(--acc)}
+@media(min-width:900px){nav.toc{position:sticky;top:0;z-index:5}}
+section.lv{border-top:1px solid var(--line)}
+.lvh{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px;margin-bottom:18px}
+.lvh .n{font:600 14px Geist,sans-serif;color:var(--accInk);display:block;margin-bottom:6px}
+.done{display:flex;align-items:center;gap:8px;font-size:14px;min-height:44px;cursor:pointer}
+.done input,.chk input{width:20px;height:20px;accent-color:var(--acc)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+.prose{max-width:70ch}
+.eq{font:500 15px/1.7 Geist Mono,monospace;background:var(--panel);border-left:3px solid var(--acc);padding:10px 14px;margin:12px 0 16px;overflow-x:auto;white-space:pre}
+.codebox{position:relative;margin:12px 0 18px}
+.codebox pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:16px;margin:0;font:13.5px/1.55 Geist Mono,monospace;overflow-x:auto;max-height:520px}
+.codebox button{position:absolute;top:8px;right:8px;min-height:34px;font-size:13px;background:var(--panel)}
+code{font-family:Geist Mono,monospace;font-size:.92em;overflow-wrap:anywhere}
+.scroll{overflow-x:auto;margin:10px 0 18px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;font-size:14px;color:var(--muted)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+details.check{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:18px 0 0}
+details.check summary{cursor:pointer;padding:12px 16px;font-weight:500;min-height:44px}
+details.check summary::marker{color:var(--acc)}
+details.check div{padding:0 16px 14px;color:var(--muted)}
+.big{font:600 clamp(30px,4vw,44px)/1 Geist,sans-serif;font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(8em,1fr));gap:10px;margin:12px 0}
+.kv div{border-bottom:2px solid var(--line);padding-bottom:6px}
+.kv b{display:block;font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kv span{font-size:13px;color:var(--muted)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.steps li{margin:4px 0}
+.bp{width:100%;font-size:14px}
+.bp td{padding:6px 8px}
+.bp tr.hide{display:none}
+.bp tr.new td{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.bp .ph{font-size:12px;color:var(--muted);white-space:nowrap}
+.conv{display:grid;grid-template-columns:auto auto;gap:18px;justify-content:start;align-items:start}
+.cg{display:grid;gap:2px}
+.cg span{width:30px;height:30px;border-radius:3px;display:grid;place-items:center;font:500 11px Geist Mono,monospace;cursor:pointer;border:1px solid transparent}
+.cg span.hl{border-color:var(--acc)}
+.attn{display:grid;grid-template-columns:4em repeat(6,minmax(0,1fr));gap:2px;font-size:13px}
+.attn span{display:grid;place-items:center;min-height:34px;border-radius:3px;font-variant-numeric:tabular-nums}
+.attn .lab{color:var(--muted);justify-content:end;padding-right:4px}
+.bars div{display:grid;grid-template-columns:4em minmax(0,1fr) 4.5em;gap:8px;align-items:center;margin:6px 0;font-size:14px}
+.bars i{display:block;height:14px;background:var(--acc);border-radius:2px}
+.bars em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.chk input{margin-top:3px;flex:none}
+.xor{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.node{border:1.5px solid var(--line);border-radius:999px;padding:6px 14px;font:500 15px Geist Mono,monospace;white-space:nowrap}
+.node.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,transparent)}
+tr.cur td{background:color-mix(in srgb,var(--acc) 14%,transparent)}
+.swatch{position:absolute;width:0;height:0;overflow:hidden}
+footer{font-size:14px;color:var(--muted)}
+@media(max-width:980px){.two{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){.bench{grid-template-columns:minmax(0,1fr)}#board{min-height:340px}.readouts{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.conv{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){table{font-size:13px}th,td{padding:6px 4px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flex;justify-content:space-between;gap:12px;border:0}.stack td::before{content:attr(data-l);color:var(--muted);flex:none;max-width:40%}.cg span{width:26px;height:26px}.ctl{grid-template-columns:6.5em minmax(0,1fr) 3.8em}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<span class="swatch" id="swA" style="color:var(--acc)"></span><span class="swatch" id="swB" style="color:var(--c0)"></span><span class="swatch" id="swBg" style="color:var(--panel)"></span><span class="swatch" id="swL" style="color:var(--line)"></span><span class="swatch" id="swI" style="color:var(--ink)"></span>
+
+<header class="band hero" id="top">
+ <div class="wrap">
+  <h1>Neural networks, from zero to expert</h1>
+  <p class="lead">A playbook in 13 levels, each with something to play with. Start here: the network below is learning to separate two spirals, live in your browser, using exactly the algorithm from Levels 4 to 6.</p>
+  <div class="bench">
+   <div class="fig" id="board"><canvas id="cv" aria-label="Decision boundary of the network being trained"></canvas></div>
+   <div class="panel" id="trainer">
+    <div class="readouts">
+     <div class="ro"><b id="rStep">0</b><span>steps</span></div>
+     <div class="ro hot"><b id="rLoss">–</b><span>loss</span></div>
+     <div class="ro"><b id="rAcc">–</b><span>accuracy</span></div>
+     <div class="ro"><b id="rPar">–</b><span>parameters</span></div>
+    </div>
+    <div class="row"><button class="main" id="play">Pause</button><button id="stepB">Step ×10</button><button id="reset">Reset weights</button></div>
+    <div class="seg" id="dsSeg" role="group" aria-label="Dataset"><button data-ds="spiral">Spirals</button><button data-ds="moons">Moons</button><button data-ds="circle">Circle</button><button data-ds="xor">XOR</button></div>
+    <div class="ctl"><label for="act">Activation</label><select id="act"><option value="relu">ReLU</option><option value="tanh">Tanh</option><option value="linear">None (linear)</option></select><span></span></div>
+    <div class="ctl"><label for="init">Weights start</label><select id="init"><option value="he">Random</option><option value="zero">All zeros</option></select><span></span></div>
+    <div class="ctl"><label for="layers">Hidden layers</label><input type="range" id="layers" min="1" max="3" step="1" value="2"><output id="layersO">2</output></div>
+    <div class="ctl"><label for="units">Neurons each</label><input type="range" id="units" min="2" max="32" step="1" value="24"><output id="unitsO">24</output></div>
+    <div class="ctl"><label for="lr">Learning rate</label><input type="range" id="lr" min="0" max="100" step="1" value="49"><output id="lrO">0.03</output></div>
+    <div class="ctl"><label for="noise">Data noise</label><input type="range" id="noise" min="0" max="3" step="0.25" value="1"><output id="noiseO">1</output></div>
+    <p class="small" style="margin:12px 0 4px">Break it on purpose (Level 5 experiments):</p>
+    <div class="seg" id="presets"><button data-p="good">Healthy</button><button data-p="zero">Zero init</button><button data-p="hot">lr = 1.0</button><button data-p="lin">No activation</button><button data-p="tiny">3 neurons</button></div>
+    <div class="fig spark" id="spark" aria-label="Loss over training steps"></div>
+    <p class="small" id="verdict" style="margin:6px 0 0">Loss over time. Orange points are class 1, dark points class 0; shading shows what the network predicts everywhere.</p>
+   </div>
+  </div>
+ </div>
+</header>
+
+<nav class="toc" aria-label="Levels"><div class="wrap" id="toc"></div></nav>
+
+<section class="band lv" id="how"><div class="wrap two">
+ <div class="prose">
+  <h2>A network is a stack of simple functions, tuned automatically until it does a job well</h2>
+  <p class="lead">Everything below unpacks that sentence. Each level builds on the last; tick “Mark done” to track progress in the bar above (saved in this browser only).</p>
+  <h3>How to study a level</h3>
+  <ol class="steps"><li>Read the intuition. If you can't explain it in two sentences, reread.</li><li>Turn the knobs on the level's instrument until the behaviour stops surprising you.</li><li>Work the maths on paper, then type the code yourself and break it on purpose.</li><li>Answer the self-check before opening it.</li></ol>
+  <p class="small">Notation: lowercase x, w, b are scalars or vectors; uppercase W, X are matrices. W⁽¹⁾ is layer 1's weights. Shapes are (rows, cols); a batch of N examples with D features is (N, D).</p>
+ </div>
+ <div class="scroll"><table class="stack"><thead><tr><th>Stage</th><th>Levels</th><th>You can then</th><th>Time</th></tr></thead><tbody>
+  <tr><td>Beginner</td><td>0–3</td><td>Explain what a network computes and draw one with correct shapes</td><td>~1 week</td></tr>
+  <tr><td>Practitioner</td><td>4–7</td><td>Derive backprop by hand, code a network in NumPy, train real models in PyTorch</td><td>~4 weeks</td></tr>
+  <tr><td>Advanced</td><td>8–10</td><td>Build CNNs, RNNs and a small Transformer; read papers</td><td>~4 weeks</td></tr>
+  <tr><td>Expert</td><td>11–12</td><td>Fine-tune and serve large models, reason about scaling, debug training at the edges</td><td>ongoing</td></tr>
+ </tbody></table></div>
+</div></section>
+
+<section class="band lv" id="l0" data-level="0" data-short="Big picture"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 0</span><h2>A network learns rules from examples instead of being given them</h2></div><label class="done"><input type="checkbox" data-done="0"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <p>Show it thousands of (input, correct answer) pairs and it adjusts millions of internal numbers until its answers match. Picture a mixing desk with a million knobs: play a song, compare the output with the target recording, nudge every knob slightly in the direction that sounds closer, repeat a million times. That is training; the knobs are the <b>weights</b>. The trainer at the top of this page is doing exactly that with about 700 knobs.</p>
+  <h3>Five words you need from day one</h3>
+  <ul><li><b>Neuron</b>: multiplies each input by a weight, adds them, adds a bias, squashes the result with an activation function.</li><li><b>Layer</b>: many neurons side by side reading the same inputs.</li><li><b>Parameters</b>: the weights and biases, the knobs. Large language models have billions.</li><li><b>Loss</b>: one number for how wrong the network is. Training makes it small.</li><li><b>Gradient</b>: for every knob, which way to turn it, and how strongly, to reduce the loss.</li></ul>
+  <p><b>Why stacking layers works.</b> Each layer re-describes its input more usefully. In an image model, early layers find edges, later ones textures, then eyes and wheels, then “cat” or “car”. Nobody programs these features; they emerge because they reduce the loss.</p>
+  <p><b>What it is not.</b> Not a brain simulation (the analogy is loose), not understanding in a human sense, and not magic: bad or scarce data gives confident wrong answers.</p>
+ </div><div>
+  <div class="scroll"><table><thead><tr><th></th><th>Traditional code</th><th>Neural network</th></tr></thead><tbody>
+   <tr><td>You write</td><td>The rules</td><td>The architecture and the loss</td></tr>
+   <tr><td>You supply</td><td>Input</td><td>Input + correct outputs</td></tr>
+   <tr><td>Computer produces</td><td>Output</td><td>The rules, as weights</td></tr>
+   <tr><td>Good for</td><td>Tax, routing, parsing</td><td>Images, speech, language</td></tr>
+  </tbody></table></div>
+  <details class="check"><summary>Self-check: explain in two sentences, without the word “neuron”, how a network gets better at a task.</summary><div>It makes a prediction, measures how wrong it is with a loss, and nudges each of its numbers in the direction that reduces that error. Repeating this over many examples gradually tunes the numbers into a function that fits the data.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l1" data-level="1" data-short="Math"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 1</span><h2>Four pieces of maths carry you to Level 10</h2></div><label class="done"><input type="checkbox" data-done="1"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <h3 style="margin-top:0">1. The dot product</h3>
+  <p>Multiply matching entries, add them up. It is the operation inside every neuron and is large when two vectors point the same way, so a neuron's weights act as a pattern the input is matched against.</p>
+  <div class="eq">w·x = Σ wᵢxᵢ      [0.5, −1, 2]·[2, 0, 1] = 1 + 0 + 2 = 3</div>
+  <h3>2. Matrix multiplication is many dot products at once</h3>
+  <p>A layer of 4 neurons reading 3 inputs stores a (3, 4) weight matrix. A batch X of shape (N, 3) times W gives (N, 4): every example against every neuron in one operation, which is what GPUs are built for. <b>Shape rule:</b> (a, b) @ (b, c) → (a, c). Most beginner bugs are shape bugs.</p>
+  <h3>3. Derivatives and the chain rule</h3>
+  <p>A derivative says how fast an output changes when you wiggle an input; the gradient lists that for every parameter and points uphill, so training steps the other way. A network is functions inside functions, and the chain rule multiplies local derivatives along the path:</p>
+  <div class="eq">dy/dx = dy/dg · dg/dx
+y = (3x + 1)²  →  g = 3x + 1,  dy/dg = 2g,  dg/dx = 3  →  dy/dx = 6(3x + 1)</div>
+  <p>Backpropagation (Level 4) is this rule applied layer by layer.</p>
+  <h3>4. Probability</h3>
+  <p><b>Softmax</b> turns scores (logits) into probabilities: exponentiate, divide by the sum. If the model gives the correct class probability p, the loss −ln p is 0 at p = 1 and huge near 0: that is cross-entropy. Visual refresher: 3Blue1Brown's “Essence of Linear Algebra” and “Essence of Calculus”.</p>
+ </div><div>
+  <div class="panel">
+   <h3 style="margin-top:0">Shape checker</h3>
+   <p class="small">Enter two matrix shapes and see whether A @ B works.</p>
+   <div class="grid3"><div><label class="small" for="sa">A shape</label><input type="text" id="sa" value="32, 784"></div><div><label class="small" for="sb">B shape</label><input type="text" id="sb" value="784, 128"></div><div><label class="small">Result</label><div class="big" id="sr" style="font-size:24px;padding-top:8px">–</div></div></div>
+   <p class="small" id="sm" style="margin-top:10px"></p>
+  </div>
+  <div class="scroll"><table><thead><tr><th>Function</th><th>Derivative</th></tr></thead><tbody>
+   <tr><td>xⁿ</td><td>n·xⁿ⁻¹</td></tr><tr><td>eˣ</td><td>eˣ</td></tr><tr><td>ln x</td><td>1/x</td></tr><tr><td>sigmoid σ(x)</td><td>σ(x)(1 − σ(x))</td></tr><tr><td>tanh x</td><td>1 − tanh²x</td></tr><tr><td>ReLU max(0, x)</td><td>1 if x &gt; 0, else 0</td></tr>
+  </tbody></table></div>
+  <details class="check"><summary>Self-check: shape of (2, 3) @ (3, 5)? Differentiate y = σ(2x).</summary><div>(2, 5). By the chain rule dy/dx = 2·σ(2x)·(1 − σ(2x)).</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l2" data-level="2" data-short="Neuron"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 2</span><h2>A neuron is a weighted vote passed through a bend</h2></div><label class="done"><input type="checkbox" data-done="2"> Mark done</label></div>
+ <div class="two"><div class="panel" id="neuron">
+  <h3 style="margin-top:0">Should I go running?</h3>
+  <div class="ctl"><label for="nx0">Sunny</label><input type="range" id="nx0" min="0" max="1" step="0.1" value="1"><output id="nx0O"></output></div>
+  <div class="ctl"><label for="nx1">Warm</label><input type="range" id="nx1" min="0" max="1" step="0.1" value="0.6"><output id="nx1O"></output></div>
+  <div class="ctl"><label for="nx2">Tired</label><input type="range" id="nx2" min="0" max="1" step="0.1" value="1"><output id="nx2O"></output></div>
+  <div class="ctl"><label for="nw0">Weight sunny</label><input type="range" id="nw0" min="-4" max="4" step="0.1" value="2"><output id="nw0O"></output></div>
+  <div class="ctl"><label for="nw1">Weight warm</label><input type="range" id="nw1" min="-4" max="4" step="0.1" value="1.5"><output id="nw1O"></output></div>
+  <div class="ctl"><label for="nw2">Weight tired</label><input type="range" id="nw2" min="-4" max="4" step="0.1" value="-3"><output id="nw2O"></output></div>
+  <div class="ctl"><label for="nb">Bias</label><input type="range" id="nb" min="-4" max="4" step="0.1" value="-0.5"><output id="nbO"></output></div>
+  <div class="ctl"><label for="nf">Activation</label><select id="nf"><option value="sigmoid">Sigmoid</option><option value="relu">ReLU</option><option value="tanh">Tanh</option><option value="step">Step (perceptron)</option></select><span></span></div>
+  <div class="eq" id="neq"></div>
+  <div class="fig" id="actFig" style="min-height:200px"></div>
+ </div><div class="prose">
+  <div class="eq">z = w·x + b        a = f(z)</div>
+  <p>The weights say how much each input matters and in which direction; the bias shifts how easily the neuron fires. With the defaults, tiredness carries a large negative weight and wins: z = −0.6, so σ(−0.6) ≈ 0.35. Drag “Tired” to 0 and watch it flip.</p>
+  <h3>Why the activation matters</h3>
+  <p>Without a non-linear activation, layers collapse: a linear function of a linear function is linear, so 100 layers equal one. Try “No activation” in the trainer at the top: it can only draw a straight line through the spirals.</p>
+  <div class="scroll"><table class="stack"><thead><tr><th>Activation</th><th>Range</th><th>Use today</th></tr></thead><tbody>
+   <tr><td>Sigmoid</td><td>(0, 1)</td><td>Output for yes/no probability; rarely hidden (gradients vanish)</td></tr>
+   <tr><td>Tanh</td><td>(−1, 1)</td><td>Inside LSTM and GRU gates</td></tr>
+   <tr><td>ReLU</td><td>[0, ∞)</td><td>Default hidden activation for MLPs and CNNs</td></tr>
+   <tr><td>Leaky ReLU</td><td>(−∞, ∞)</td><td>When ReLUs “die” stuck at 0</td></tr>
+   <tr><td>GELU / SiLU</td><td>≈ (−0.2, ∞)</td><td>Transformers and modern LLMs</td></tr>
+   <tr><td>Softmax</td><td>sums to 1</td><td>Output for multi-class</td></tr>
+  </tbody></table></div>
+  <p><b>One neuron is logistic regression:</b> a single sigmoid neuron trained with cross-entropy draws one straight boundary. A network is, roughly, many of these stacked. <b>Its limit is XOR</b> (output 1 when exactly one input is 1): no single line separates those points, which stalled the field after 1969. A hidden layer fixes it.</p>
+  <details class="check"><summary>Self-check: output if not tired? Why do linear-only layers equal one layer?</summary><div>z = 2.0 + 0.9 − 0.5 = 2.4, σ(2.4) ≈ 0.92. Because W₂(W₁x) = (W₂W₁)x, a single matrix.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l3" data-level="3" data-short="Layers"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 3</span><h2>Hidden layers re-map inputs until the problem becomes easy</h2></div><label class="done"><input type="checkbox" data-done="3"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <p>A multi-layer perceptron (MLP) chains layers; running an input through all of them is the <b>forward pass</b>. “Deep” just means many hidden layers.</p>
+  <div class="eq">h⁽¹⁾ = f(X W⁽¹⁾ + b⁽¹⁾)
+h⁽²⁾ = f(h⁽¹⁾ W⁽²⁾ + b⁽²⁾)
+ŷ = softmax(h⁽²⁾ W⁽³⁾ + b⁽³⁾)</div>
+  <h3>XOR solved by hand</h3>
+  <p>h₁ = ReLU(x₁ + x₂), h₂ = ReLU(x₁ + x₂ − 1), y = h₁ − 2h₂. Toggle the inputs:</p>
+  <div class="xor"><button id="x1b" aria-pressed="false">x₁ = 0</button><button id="x2b" aria-pressed="false">x₂ = 0</button><span>→</span><span class="node" id="h1n">h₁ = 0</span><span class="node" id="h2n">h₂ = 0</span><span>→</span><span class="node" id="yn">y = 0</span></div>
+  <div class="scroll"><table id="xorT"><thead><tr><th>x₁, x₂</th><th class="num">h₁</th><th class="num">h₂</th><th class="num">y</th></tr></thead><tbody><tr><td>0, 0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>0, 1</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr><tr><td>1, 0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr><tr><td>1, 1</td><td class="num">2</td><td class="num">1</td><td class="num">0</td></tr></tbody></table></div>
+  <h3>Why it works, and what to pick</h3>
+  <p>The universal approximation theorem says one hidden layer with enough neurons can approximate any continuous function on a bounded region; each ReLU adds a bend. But “enough” can be enormous, and in practice <b>depth beats width</b> because deep networks reuse features. Tabular data: 2–4 layers of 64–512 units (and compare against gradient-boosted trees). Images, audio and text: use the architectures of Levels 8–10.</p>
+ </div><div>
+  <div class="panel">
+   <h3 style="margin-top:0">Parameter counter</h3>
+   <p class="small">Layer sizes, input first. A dense layer has in × out weights + out biases.</p>
+   <input type="text" id="pc" value="784, 128, 64, 10" aria-label="Layer sizes">
+   <div class="scroll"><table id="pcT"></table></div>
+   <p class="small">Try 2, 24, 24, 1: that is the trainer at the top.</p>
+  </div>
+  <details class="check"><summary>Self-check: parameters of 20 → 256 → 256 → 3? Output shape for a batch of 50?</summary><div>5,376 + 65,792 + 771 = 71,939 parameters. Output (50, 3).</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l4" data-level="4" data-short="Learning"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 4</span><h2>Learning is four steps on repeat: forward, loss, backprop, update</h2></div><label class="done"><input type="checkbox" data-done="4"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <h3 style="margin-top:0">1. The loss</h3>
+  <div class="scroll"><table class="stack"><thead><tr><th>Task</th><th>Output layer</th><th>Loss</th></tr></thead><tbody>
+   <tr><td>Regression</td><td>Linear</td><td>Mean squared error ½(ŷ − y)²</td></tr>
+   <tr><td>Robust regression</td><td>Linear</td><td>Huber or L1</td></tr>
+   <tr><td>Binary classification</td><td>Sigmoid</td><td>Binary cross-entropy</td></tr>
+   <tr><td>Multi-class</td><td>Softmax</td><td>Cross-entropy −ln p(correct)</td></tr>
+   <tr><td>Multi-label</td><td>Sigmoid per class</td><td>BCE per class</td></tr>
+  </tbody></table></div>
+  <h3>2. Gradient descent</h3>
+  <p>Blindfolded on a hillside, feel the slope and step downhill. η, the <b>learning rate</b>, is the most important hyperparameter. Mini-batches of 32–4096 examples per step are the standard (“SGD” usually means this); one pass through the data is an <b>epoch</b>.</p>
+  <div class="eq">w ← w − η · ∂L/∂w</div>
+  <div class="panel">
+   <p class="small" style="margin:0">Loss L(w) = (w − 2)² + 1, starting at w = −3. Find the learning rate where it starts zig-zagging, and where it explodes.</p>
+   <div class="fig" id="gdFig" style="min-height:220px"></div>
+   <div class="ctl"><label for="gdlr">Learning rate</label><input type="range" id="gdlr" min="0.02" max="1.1" step="0.02" value="0.1"><output id="gdlrO"></output></div>
+   <div class="row"><button class="main" id="gdStep">Step</button><button id="gdRun">Run 20</button><button id="gdReset">Reset</button></div>
+   <p class="small" id="gdMsg"></p>
+  </div>
+  <h3>3. Backpropagation</h3>
+  <p>Backprop gets the gradient for every weight in one backward sweep: each operation receives “how much the loss changes per unit of my output”, multiplies by its local derivative, and passes it on. It costs about two forward passes however many weights there are.</p>
+  <div class="eq">dZ = dA ⊙ f′(Z)     dW = A_prevᵀ dZ     db = Σ_rows dZ     dA_prev = dZ Wᵀ
+softmax + cross-entropy:  dZ = p − y</div>
+  <p><b>Vanishing and exploding gradients.</b> Backprop multiplies many local derivatives. Sigmoid's is at most 0.25, so ten sigmoid layers can shrink a gradient by about 10⁻⁶. ReLU, careful initialization, normalization, residual connections and clipping (Level 6) are why deep learning took off after about 2010.</p>
+ </div><div>
+  <div class="panel" id="bpPanel">
+   <h3 style="margin-top:0">Backprop, one line at a time</h3>
+   <p class="small">x → sigmoid neuron (w₁, b₁) → linear output (w₂, b₂), loss ½(y − t)². Edit the start values, step through, then apply the update and go again.</p>
+   <div class="grid3">
+    <div><label class="small" for="bx">x</label><input type="number" id="bx" value="1" step="0.1"></div>
+    <div><label class="small" for="bt">target t</label><input type="number" id="bt" value="1" step="0.1"></div>
+    <div><label class="small" for="blr">η</label><input type="number" id="blr" value="0.1" step="0.05"></div>
+    <div><label class="small" for="bw1">w₁</label><input type="number" id="bw1" value="0.5" step="0.1"></div>
+    <div><label class="small" for="bb1">b₁</label><input type="number" id="bb1" value="0" step="0.1"></div>
+    <div><label class="small" for="bw2">w₂</label><input type="number" id="bw2" value="2" step="0.1"></div>
+    <div><label class="small" for="bb2">b₂</label><input type="number" id="bb2" value="0" step="0.1"></div>
+   </div>
+   <div class="row"><button class="main" id="bpNext">Next line</button><button id="bpAll">Show all</button><button id="bpApply">Apply update</button><button id="bpReset">Reset</button></div>
+   <div class="scroll"><table class="bp" id="bpT"></table></div>
+   <p class="small" id="bpHist"></p>
+  </div>
+  <details class="check"><summary>Self-check: redo the example with t = 0. What is ∂L/∂w₁?</summary><div>∂L/∂y = 1.2449, ∂L/∂h = 2.4898, ∂L/∂w₁ ≈ 0.5851. Set t = 0 above to confirm. For softmax + cross-entropy, differentiating −ln(softmax) gives ∂L/∂zᵢ = pᵢ − yᵢ.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l5" data-level="5" data-short="NumPy"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 5</span><h2>Build one from scratch once, and it stops being magic</h2></div><label class="done"><input type="checkbox" data-done="5"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <p>About 100 lines of NumPy: forward pass, backprop, Adam, a gradient check and mini-batch training on two spirals. Run while writing this playbook: the gradient check gives a relative error of 6×10⁻¹¹ and test accuracy reaches 100% within 200 epochs, in under a second on a CPU. Type it rather than paste it.</p>
+  <h3 style="margin-top:12px">Read the code against the maths</h3>
+  <ul><li><code>forward</code> caches every z and a for the backward pass; that memory is why training needs far more GPU memory than inference.</li><li><code>delta[np.arange(n), y] -= 1</code> is the dZ = p − y shortcut.</li><li><code>a_prev.T @ delta</code> is dW; <code>delta @ W.T * relu_grad</code> passes the gradient down a layer.</li><li>Adam keeps running averages of gradients and squared gradients, giving every weight its own step size.</li><li>Gradient-check error below 1e-6 means correct backprop; above 1e-3 means a bug.</li></ul>
+  <h3>Break it on purpose</h3>
+  <p>The presets in the trainer at the top run these same experiments with a JavaScript port of this code:</p>
+  <div class="scroll"><table class="stack"><thead><tr><th>Change</th><th>What happens (measured)</th></tr></thead><tbody>
+   <tr><td>All weights start at 0</td><td>Loss sticks at 0.693 = ln 2, pure guessing: no gradient reaches the hidden layers</td></tr>
+   <tr><td>Learning rate 1.0</td><td>Training blows up and stalls near guessing</td></tr>
+   <tr><td>No activation</td><td>About 66–71% accuracy: a linear model can't separate spirals</td></tr>
+   <tr><td>3 hidden neurons</td><td>Underfits at roughly 73%</td></tr>
+  </tbody></table></div>
+  <p>Next: Karpathy's micrograd video builds a tiny autograd engine, the bridge to PyTorch.</p>
+ </div><div>
+  <div class="codebox"><button data-copy="npCode">Copy</button><pre id="npCode">import numpy as np
+
+# ---------- 1. Data: two interleaved spirals (not linearly separable) ----------
+def make_spirals(n=200, noise=0.2, seed=0):
+    rng = np.random.default_rng(seed)
+    theta = np.sqrt(rng.random(n)) * 3 * np.pi
+    a = np.c_[theta * np.cos(theta), theta * np.sin(theta)]
+    b = -a
+    X = np.r_[a, b] + rng.normal(0, noise, (2 * n, 2))
+    y = np.r_[np.zeros(n), np.ones(n)].astype(int)
+    X = (X - X.mean(0)) / X.std(0)          # standardize inputs
+    return X, y
+
+# ---------- 2. Building blocks ----------
+def relu(z):        return np.maximum(0, z)
+def relu_grad(z):   return (z &gt; 0).astype(z.dtype)
+
+def softmax(z):
+    z = z - z.max(axis=1, keepdims=True)    # numerical stability
+    e = np.exp(z)
+    return e / e.sum(axis=1, keepdims=True)
+
+def cross_entropy(probs, y):
+    return -np.log(probs[np.arange(len(y)), y] + 1e-12).mean()
+
+# ---------- 3. The model ----------
+class MLP:
+    def __init__(self, sizes, seed=0):
+        rng = np.random.default_rng(seed)
+        # He initialization: good default for ReLU
+        self.W = [rng.normal(0, np.sqrt(2 / m), (m, n)) for m, n in zip(sizes[:-1], sizes[1:])]
+        self.b = [np.zeros(n) for n in sizes[1:]]
+
+    def forward(self, X):
+        self.cache = [(None, X)]            # (pre-activation z, activation a)
+        a = X
+        for i, (W, b) in enumerate(zip(self.W, self.b)):
+            z = a @ W + b
+            a = softmax(z) if i == len(self.W) - 1 else relu(z)
+            self.cache.append((z, a))
+        return a
+
+    def backward(self, y, l2=0.0):
+        n = len(y)
+        probs = self.cache[-1][1]
+        delta = probs.copy()
+        delta[np.arange(n), y] -= 1         # dL/dz for softmax + cross-entropy
+        delta /= n
+        gW, gb = [], []
+        for i in reversed(range(len(self.W))):
+            a_prev = self.cache[i][1]
+            gW.insert(0, a_prev.T @ delta + l2 * self.W[i])
+            gb.insert(0, delta.sum(0))
+            if i &gt; 0:
+                z_prev = self.cache[i][0]
+                delta = (delta @ self.W[i].T) * relu_grad(z_prev)
+        return gW, gb
+
+# ---------- 4. Adam optimizer ----------
+class Adam:
+    def __init__(self, params, lr=1e-2, b1=0.9, b2=0.999, eps=1e-8):
+        self.lr, self.b1, self.b2, self.eps, self.t = lr, b1, b2, eps, 0
+        self.m = [np.zeros_like(p) for p in params]
+        self.v = [np.zeros_like(p) for p in params]
+
+    def step(self, params, grads):
+        self.t += 1
+        for i, (p, g) in enumerate(zip(params, grads)):
+            self.m[i] = self.b1 * self.m[i] + (1 - self.b1) * g
+            self.v[i] = self.b2 * self.v[i] + (1 - self.b2) * g * g
+            m_hat = self.m[i] / (1 - self.b1 ** self.t)
+            v_hat = self.v[i] / (1 - self.b2 ** self.t)
+            p -= self.lr * m_hat / (np.sqrt(v_hat) + self.eps)   # in-place update
+
+# ---------- 5. Gradient check (always do this once when writing backprop) ----------
+def grad_check(model, X, y, eps=1e-5):
+    model.forward(X); gW, _ = model.backward(y)
+    W = model.W[0]; i, j = 0, 0
+    old = W[i, j]
+    W[i, j] = old + eps; lp = cross_entropy(model.forward(X), y)
+    W[i, j] = old - eps; lm = cross_entropy(model.forward(X), y)
+    W[i, j] = old
+    num = (lp - lm) / (2 * eps)
+    return abs(num - gW[0][i, j]) / max(1e-12, abs(num) + abs(gW[0][i, j]))
+
+# ---------- 6. Train ----------
+X, y = make_spirals()
+rng = np.random.default_rng(1)
+idx = rng.permutation(len(X)); split = int(0.8 * len(X))
+Xtr, ytr, Xte, yte = X[idx[:split]], y[idx[:split]], X[idx[split:]], y[idx[split:]]
+
+model = MLP([2, 64, 64, 2])
+print("gradient check relative error:", grad_check(model, Xtr[:20], ytr[:20]))
+opt = Adam(model.W + model.b, lr=1e-2)
+
+for epoch in range(1, 501):
+    perm = rng.permutation(len(Xtr))
+    for k in range(0, len(Xtr), 32):                      # mini-batches of 32
+        bi = perm[k:k + 32]
+        model.forward(Xtr[bi])
+        gW, gb = model.backward(ytr[bi], l2=1e-4)
+        opt.step(model.W + model.b, gW + gb)
+    if epoch % 100 == 0:
+        p_tr = model.forward(Xtr); loss = cross_entropy(p_tr, ytr)
+        acc_tr = (p_tr.argmax(1) == ytr).mean()
+        acc_te = (model.forward(Xte).argmax(1) == yte).mean()
+        print(f"epoch {epoch:3d}  loss {loss:.4f}  train acc {acc_tr:.3f}  test acc {acc_te:.3f}")</pre></div>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l6" data-level="6" data-short="Practice"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 6</span><h2>Most of deep learning is making training work reliably</h2></div><label class="done"><input type="checkbox" data-done="6"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <h3 style="margin-top:0">Data first</h3>
+  <p>Split train / validation / test (e.g. 80/10/10) and touch test once. Standardize inputs with training-set statistics only. Check 100 random labels by hand. Augment: flips, crops and colour jitter for images; noise and shifts for audio.</p>
+  <h3>Initialization and optimizers</h3>
+  <div class="scroll"><table class="stack"><thead><tr><th>Choice</th><th>Rule</th></tr></thead><tbody>
+   <tr><td>He init (ReLU)</td><td>std = √(2 / fan_in)</td></tr>
+   <tr><td>Xavier init (tanh, sigmoid)</td><td>std = √(2 / (fan_in + fan_out))</td></tr>
+   <tr><td>SGD + momentum 0.9</td><td>Vision; often generalizes best with a good schedule</td></tr>
+   <tr><td>Adam, lr 1e-3</td><td>Default starting point</td></tr>
+   <tr><td>AdamW</td><td>Adam with decoupled weight decay; default for Transformers</td></tr>
+  </tbody></table></div>
+  <p><b>Schedules matter as much as optimizers:</b> linear warmup for 1–5% of steps, then cosine decay to about 10% of peak. Find the peak with a learning-rate range test. Scaling batch size by k: scale lr by roughly k or √k.</p>
+  <h3>Regularization, normalization, stability</h3>
+  <ul><li><b>Weight decay</b> 0.01–0.1 with AdamW; <b>dropout</b> 0.1–0.5, off at inference; <b>early stopping</b>; <b>label smoothing</b>; more data and augmentation are the strongest of all.</li><li><b>BatchNorm</b> for CNNs (train/eval modes differ, a classic bug); <b>LayerNorm</b> or the cheaper <b>RMSNorm</b> for Transformers.</li><li><b>Residual connections</b> (x + F(x)) give gradients a highway and made 100+ layer networks trainable.</li><li><b>Gradient clipping</b> at norm 1.0 for RNNs and Transformers; <b>bf16 mixed precision</b> for about 2× speed and half the memory.</li></ul>
+ </div><div>
+  <div class="panel">
+   <h3 style="margin-top:0">Diagnose your curves</h3>
+   <div class="grid3"><div><label class="small" for="dTr">Training error</label><select id="dTr"><option>Low</option><option>High</option></select></div><div><label class="small" for="dVa">Validation error</label><select id="dVa"><option>High</option><option>Low</option></select></div><div></div></div>
+   <p class="big" id="dOut" style="font-size:28px;margin:14px 0 6px"></p><p id="dDo"></p>
+  </div>
+  <h3>The debugging recipe, in order</h3>
+  <div id="dbg"></div>
+  <p class="small">Expanded in Karpathy's post “A Recipe for Training Neural Networks”.</p>
+  <details class="check"><summary>Self-check: 99% training accuracy, 70% validation. Three things to try, in order?</summary><div>It is overfitting. 1) More data or augmentation, 2) regularize: weight decay, dropout, early stopping, 3) a smaller model.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l7" data-level="7" data-short="PyTorch"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 7</span><h2>PyTorch does Levels 4 to 6 for you, on a GPU</h2></div><label class="done"><input type="checkbox" data-done="7"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <p>It records operations on tensors and computes all gradients automatically (autograd), runs on GPUs and ships layers, losses and optimizers. It dominates research and most industry work; JAX is the main alternative.</p>
+  <ul><li><b>Tensor</b>: a NumPy array that can live on a GPU and track gradients.</li><li><b>Autograd</b>: <code>loss.backward()</code> fills <code>.grad</code> on every parameter.</li><li><b>nn.Module</b>: a class holding parameters and a <code>forward</code> method.</li></ul>
+  <div class="codebox"><button data-copy="tg">Copy</button><pre id="tg">import torch
+w = torch.tensor(2.0, requires_grad=True)
+loss = (3 * w + 1) ** 2
+loss.backward()
+print(w.grad)   # tensor(42.) = 6 * (3*2 + 1), the Level 1 chain-rule example</pre></div>
+  <h3>The classic bugs</h3>
+  <div class="scroll"><table class="stack"><thead><tr><th>Symptom</th><th>Cause</th></tr></thead><tbody>
+   <tr><td>Loss never improves or jumps</td><td>Forgot <code>opt.zero_grad()</code>; gradients accumulate</td></tr>
+   <tr><td>Eval accuracy random or worse than train</td><td>Forgot <code>model.eval()</code></td></tr>
+   <tr><td>Memory grows every step</td><td>Storing <code>loss</code> instead of <code>loss.item()</code></td></tr>
+   <tr><td>“Expected all tensors on the same device”</td><td>Model and data on different devices</td></tr>
+   <tr><td>Low accuracy with CrossEntropyLoss</td><td>Applied softmax first; pass raw logits</td></tr>
+  </tbody></table></div>
+  <p>Next in the ecosystem: your own Dataset/DataLoader, <code>torch.compile</code>, <code>torch.autocast</code>, Lightning or Accelerate for multi-GPU, Hugging Face for pretrained models.</p>
+ </div><div>
+  <p class="small" style="margin-top:0">The training-loop template: an MLP on MNIST digits, typically about 97–98% test accuracy after five epochs on a laptop CPU.</p>
+  <div class="codebox"><button data-copy="tCode">Copy</button><pre id="tCode">import torch, torch.nn as nn
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+tfm = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+train_ds = datasets.MNIST("data", train=True, download=True, transform=tfm)
+test_ds  = datasets.MNIST("data", train=False, download=True, transform=tfm)
+train_dl = DataLoader(train_ds, batch_size=128, shuffle=True)
+test_dl  = DataLoader(test_ds, batch_size=512)
+
+model = nn.Sequential(
+    nn.Flatten(),
+    nn.Linear(784, 256), nn.ReLU(), nn.Dropout(0.2),
+    nn.Linear(256, 128), nn.ReLU(),
+    nn.Linear(128, 10),            # raw logits: CrossEntropyLoss applies softmax itself
+).to(device)
+
+loss_fn = nn.CrossEntropyLoss()
+opt = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)
+
+for epoch in range(5):
+    model.train()                                  # enables dropout / batchnorm training mode
+    for xb, yb in train_dl:
+        xb, yb = xb.to(device), yb.to(device)
+        logits = model(xb)                         # 1. forward
+        loss = loss_fn(logits, yb)                 # 2. loss
+        opt.zero_grad()                            # 3a. clear old gradients
+        loss.backward()                            # 3b. backprop
+        opt.step()                                 # 4. update
+
+    model.eval()                                   # disables dropout
+    correct = 0
+    with torch.no_grad():                          # no graph needed for evaluation
+        for xb, yb in test_dl:
+            xb, yb = xb.to(device), yb.to(device)
+            correct += (model(xb).argmax(1) == yb).sum().item()
+    print(f"epoch {epoch}  last batch loss {loss.item():.3f}  test acc {correct / len(test_ds):.4f}")
+
+torch.save(model.state_dict(), "mnist_mlp.pt")</pre></div>
+  <details class="check"><summary>Self-check: port the Level 5 spiral network to PyTorch in under 40 lines.</summary><div>You should match the NumPy accuracy. If not, compare init and learning rate, and check you are not applying softmax before CrossEntropyLoss.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l8" data-level="8" data-short="CNNs"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 8</span><h2>Convolutions reuse one small pattern detector everywhere in an image</h2></div><label class="done"><input type="checkbox" data-done="8"> Mark done</label></div>
+ <div class="two"><div>
+  <div class="panel">
+   <h3 style="margin-top:0">Convolution, live</h3>
+   <p class="small">Click input pixels to draw. Hover or tap an output cell to see the 3×3 patch it reads.</p>
+   <div class="seg" id="kSeg"><button data-k="v">Vertical edge</button><button data-k="h">Horizontal edge</button><button data-k="blur">Blur</button><button data-k="sharp">Sharpen</button></div>
+   <div class="conv" style="margin-top:14px"><div><p class="small" style="margin:0 0 4px">Input 8×8</p><div class="cg" id="cin" style="grid-template-columns:repeat(8,auto)"></div></div><div><p class="small" style="margin:0 0 4px">Feature map 6×6</p><div class="cg" id="cout" style="grid-template-columns:repeat(6,auto)"></div></div></div>
+   <div class="eq" id="cMsg" style="white-space:pre-wrap"></div>
+  </div>
+  <div class="panel" style="margin-top:16px">
+   <h3 style="margin-top:0">Layer calculator</h3>
+   <div class="grid3"><div><label class="small" for="cW">Input size W</label><input type="number" id="cW" value="32"></div><div><label class="small" for="cK">Kernel K</label><input type="number" id="cK" value="3"></div><div><label class="small" for="cP">Padding P</label><input type="number" id="cP" value="1"></div><div><label class="small" for="cS">Stride S</label><input type="number" id="cS" value="1"></div><div><label class="small" for="cCi">Channels in</label><input type="number" id="cCi" value="3"></div><div><label class="small" for="cCo">Filters out</label><input type="number" id="cCo" value="16"></div></div>
+   <div class="kv"><div><b id="cOut">–</b><span>output size</span></div><div><b id="cPar">–</b><span>parameters</span></div></div>
+  </div>
+ </div><div class="prose">
+  <p>A 224×224 colour image is 150,528 numbers; one dense layer of 1,000 units would need 150 million weights and would learn “edge” separately at every position. A 3×3 conv filter has 27 weights and finds edges everywhere. CNNs build in <b>locality</b> and <b>translation equivariance</b>.</p>
+  <div class="eq">output = ⌊(W − K + 2P) / S⌋ + 1
+params = K·K·C_in·C_out + C_out</div>
+  <p>Each filter makes one <b>feature map</b>; stride 2 or 2×2 max-pooling halves resolution; padding 1 keeps a 3×3 conv's size. Stacked layers see ever larger regions (the <b>receptive field</b>), giving the edges → textures → parts → objects hierarchy.</p>
+  <div class="codebox"><button data-copy="cnn">Copy</button><pre id="cnn">import torch.nn as nn
+
+def block(c_in, c_out):
+    return nn.Sequential(
+        nn.Conv2d(c_in, c_out, 3, padding=1), nn.BatchNorm2d(c_out), nn.ReLU(),
+        nn.Conv2d(c_out, c_out, 3, padding=1), nn.BatchNorm2d(c_out), nn.ReLU(),
+        nn.MaxPool2d(2),
+    )
+
+model = nn.Sequential(          # CIFAR-10: 32x32 colour images, 10 classes
+    block(3, 32),     # 32x32 -> 16x16
+    block(32, 64),    # 16x16 -> 8x8
+    block(64, 128),   # 8x8   -> 4x4
+    nn.Flatten(),     # 128 * 4 * 4 = 2048
+    nn.Dropout(0.3),
+    nn.Linear(2048, 10),
+)</pre></div>
+  <p>With crop and flip augmentation, about 85% is a realistic target after 20–30 epochs; a well-tuned ResNet-18 reaches 93–95%.</p>
+  <div class="scroll"><table><thead><tr><th>Year</th><th>Model</th><th>Idea it added</th></tr></thead><tbody>
+   <tr><td>1998</td><td>LeNet-5</td><td>Conv + pool + dense</td></tr><tr><td>2012</td><td>AlexNet</td><td>GPUs, ReLU, dropout; started the boom</td></tr><tr><td>2014</td><td>VGG / Inception</td><td>Deep 3×3 stacks / parallel filter sizes</td></tr><tr><td>2015</td><td>ResNet</td><td>Residual connections, 152 layers</td></tr><tr><td>2019</td><td>EfficientNet</td><td>Scale depth, width, resolution together</td></tr><tr><td>2020</td><td>ViT</td><td>Image patches as tokens for a Transformer</td></tr><tr><td>2022</td><td>ConvNeXt</td><td>Modernized CNN matching ViTs</td></tr>
+  </tbody></table></div>
+  <p><b>Transfer learning:</b> start from a pretrained backbone (ResNet, or a modern CLIP or DINOv2 model), replace the head, train it, then optionally fine-tune everything at a 10× smaller learning rate. A few hundred images per class can be enough. Beyond classification: detection (YOLO, DETR), segmentation (U-Net, SAM), and 1D convs for audio and time series.</p>
+  <details class="check"><summary>Self-check: 64×64×3 → conv 5×5, 32 filters, stride 1, no padding → max-pool 2×2. Shape and conv parameters?</summary><div>(64 − 5)/1 + 1 = 60 → 60×60×32, pooled to 30×30×32. Parameters 5·5·3·32 + 32 = 2,432. Check it in the calculator.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l9" data-level="9" data-short="Sequences"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 9</span><h2>Sequences moved from step-by-step memory to looking at everything at once</h2></div><label class="done"><input type="checkbox" data-done="9"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <p>Text is split into <b>tokens</b>, each mapped by an <b>embedding</b> table to a learned vector; words in similar contexts get similar vectors (king − man + woman ≈ queen).</p>
+  <h3>RNNs</h3>
+  <div class="eq">hₜ = tanh(Wₓ xₜ + W_h hₜ₋₁ + b)</div>
+  <p>The same weights run at every step, carrying a memory h. Training unrolls the loop (backpropagation through time), and over 50+ steps gradients vanish or explode, so plain RNNs forget the start of long sentences.</p>
+  <h3>LSTM and GRU</h3>
+  <p>The LSTM (1997) adds a <b>cell state</b> updated by addition and three sigmoid gates: <b>forget</b> what to erase, <b>input</b> what to write, <b>output</b> what to expose. Gradients survive hundreds of steps. The GRU is a simpler two-gate variant. LSTMs powered translation and speech recognition from about 2014 to 2018.</p>
+  <div class="codebox"><button data-copy="lstm">Copy</button><pre id="lstm">import torch.nn as nn
+class SentimentLSTM(nn.Module):
+    def __init__(self, vocab, d=128, h=256):
+        super().__init__()
+        self.emb = nn.Embedding(vocab, d)
+        self.lstm = nn.LSTM(d, h, batch_first=True)
+        self.head = nn.Linear(h, 2)
+    def forward(self, ids):              # ids: (N, T) integer tokens
+        out, (h_n, c_n) = self.lstm(self.emb(ids))
+        return self.head(h_n[-1])         # final hidden state -> 2 classes</pre></div>
+  <h3>Attention</h3>
+  <p>Encoder–decoder RNNs squeezed a sentence into one vector. Attention (2014) lets each output step take a weighted average of all input states, weighted by relevance. The general form is a soft dictionary lookup: compare a query with every key, softmax the scores, average the values. √d_k keeps scores from saturating the softmax. In 2017 “Attention Is All You Need” dropped recurrence entirely: the Transformer trains in parallel over the whole sequence.</p>
+  <div class="eq">Attention(Q, K, V) = softmax(QKᵀ / √d_k) V</div>
+  <p class="small">RNN-style models survive in streaming and on-device work; state-space models (S4, Mamba) compete with Transformers on very long sequences.</p>
+ </div><div>
+  <div class="panel">
+   <h3 style="margin-top:0">Softmax and temperature</h3>
+   <p class="small">Query “it” scores three keys. Values are 10, 20, 30. Lower temperature sharpens attention; higher spreads it.</p>
+   <div class="ctl"><label for="sc0">Score “cat”</label><input type="range" id="sc0" min="-3" max="3" step="0.1" value="2"><output id="sc0O"></output></div>
+   <div class="ctl"><label for="sc1">Score “sat”</label><input type="range" id="sc1" min="-3" max="3" step="0.1" value="1"><output id="sc1O"></output></div>
+   <div class="ctl"><label for="sc2">Score “mat”</label><input type="range" id="sc2" min="-3" max="3" step="0.1" value="0"><output id="sc2O"></output></div>
+   <div class="ctl"><label for="temp">Temperature</label><input type="range" id="temp" min="0.1" max="5" step="0.1" value="1"><output id="tempO"></output></div>
+   <div class="bars" id="smBars"></div>
+   <div class="kv"><div><b id="smOut">–</b><span>weighted value Σ pᵢ·vᵢ</span></div></div>
+  </div>
+  <details class="check"><summary>Self-check: why can a Transformer process 1,000 tokens in one parallel pass but an RNN cannot? softmax([2, 1, 0]) weighting values [10, 20, 30]?</summary><div>Each RNN step needs the previous hidden state, so steps run in order; attention is one matrix product over all positions. softmax ≈ [0.665, 0.245, 0.090], weighted value ≈ 14.25: the defaults above.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l10" data-level="10" data-short="Transformers"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 10</span><h2>Every major LLM is a large Transformer trained to predict the next token</h2></div><label class="done"><input type="checkbox" data-done="10"> Mark done</label></div>
+ <div class="two"><div>
+  <div class="panel">
+   <h3 style="margin-top:0">Causal self-attention</h3>
+   <p class="small">Each row is one token's attention over the sentence. Random, untrained weights: the pattern is meaningless, the mechanics are real. Click a row.</p>
+   <div class="row"><button id="maskB" aria-pressed="true">Causal mask on</button><button id="reseed">New random weights</button></div>
+   <div class="attn" id="attn"></div>
+   <p class="small" id="attnMsg" style="margin-top:10px"></p>
+  </div>
+  <div class="panel" style="margin-top:16px">
+   <h3 style="margin-top:0">Size and memory estimator</h3>
+   <div class="grid3"><div><label class="small" for="tL">Layers</label><input type="number" id="tL" value="32"></div><div><label class="small" for="tD">d_model</label><input type="number" id="tD" value="4096"></div><div><label class="small" for="tP">Precision</label><select id="tP"><option value="2">bf16 (2 B)</option><option value="4">fp32 (4 B)</option><option value="1">int8 (1 B)</option><option value="0.5">4-bit (0.5 B)</option></select></div></div>
+   <div class="kv"><div><b id="tPar">–</b><span>≈ 12·L·d² params</span></div><div><b id="tMem">–</b><span>weights in memory</span></div><div><b id="tTrain">–</b><span>full fine-tune, AdamW</span></div></div>
+   <p class="small">Rules of thumb: training compute ≈ 6 · params · tokens FLOPs; full fine-tuning with AdamW in mixed precision needs about 16 bytes per parameter before activations. KV cache comes on top for inference.</p>
+  </div>
+ </div><div class="prose">
+  <p>In <b>self-attention</b> queries, keys and values come from the same sequence; a <b>causal mask</b> hides future tokens so next-token prediction is honest. This runs as written:</p>
+  <div class="codebox"><button data-copy="attnCode">Copy</button><pre id="attnCode">import numpy as np
+
+def softmax(z, axis=-1):
+    z = z - z.max(axis=axis, keepdims=True)
+    e = np.exp(z)
+    return e / e.sum(axis=axis, keepdims=True)
+
+def causal_self_attention(X, Wq, Wk, Wv):
+    """X: (T, d_model). Returns (T, d_head) and the (T, T) attention weights."""
+    Q, K, V = X @ Wq, X @ Wk, X @ Wv                 # each (T, d_head)
+    scores = Q @ K.T / np.sqrt(K.shape[-1])          # (T, T): how much token i attends to j
+    mask = np.triu(np.ones_like(scores), k=1)        # 1 above the diagonal = the future
+    scores = np.where(mask == 1, -np.inf, scores)    # a token may not look ahead
+    weights = softmax(scores, axis=-1)               # each row sums to 1
+    return weights @ V, weights
+
+rng = np.random.default_rng(0)
+T, d_model, d_head = 4, 8, 4
+X = rng.normal(size=(T, d_model))
+Wq, Wk, Wv = (rng.normal(size=(d_model, d_head)) / np.sqrt(d_model) for _ in range(3))
+out, w = causal_self_attention(X, Wq, Wk, Wv)
+print(out.shape)          # (4, 4)
+print(np.round(w, 2))     # lower-triangular; row sums = 1</pre></div>
+  <h3>The block</h3>
+  <ul><li><b>Multi-head attention</b>: h heads in parallel, each learning different relations, concatenated and projected.</li><li><b>Feed-forward MLP</b>: expand to about 4× d_model with GELU/SiLU (often SwiGLU); much of the knowledge lives here.</li><li><b>Pre-norm residuals</b>: x = x + Attn(Norm(x)); x = x + MLP(Norm(x)).</li><li><b>Position</b>: learned or sinusoidal embeddings early on, <b>RoPE</b> in most current LLMs.</li></ul>
+  <div class="scroll"><table class="stack"><thead><tr><th>Family</th><th>Trained to</th><th>Examples</th><th>Best for</th></tr></thead><tbody>
+   <tr><td>Encoder-only</td><td>Fill masked words</td><td>BERT, RoBERTa</td><td>Classification, search embeddings</td></tr>
+   <tr><td>Decoder-only</td><td>Predict next token</td><td>GPT, Claude, Llama</td><td>Generation, chat</td></tr>
+   <tr><td>Encoder-decoder</td><td>Map input to output</td><td>T5, Whisper</td><td>Translation, speech-to-text</td></tr>
+  </tbody></table></div>
+  <h3>How an LLM is made and used</h3>
+  <ol class="steps"><li><b>Tokenize</b> with byte-pair encoding (~50k–200k tokens).</li><li><b>Pretrain</b> on trillions of tokens; nearly all capability and compute is here.</li><li><b>Supervised fine-tuning</b> on instruction–response pairs.</li><li><b>Preference and RL</b>: RLHF, DPO, and reinforcement learning on checkable tasks (maths, code) that teaches longer reasoning.</li></ol>
+  <p>Generation samples one token at a time. <b>Temperature</b> and <b>top-p</b> control randomness; the <b>KV cache</b> stores past keys and values so each new token is cheap, and is the main memory limit for long contexts. Chinchilla (2022) found compute-optimal training near 20 tokens per parameter; today's models train far past that because smaller models are cheaper to serve. Build one: Karpathy's “Let's build GPT” and nanoGPT.</p>
+  <details class="check"><summary>Self-check: why does a decoder need a causal mask but BERT does not? bf16 weight memory of a 70B model?</summary><div>A decoder generates left to right, so seeing the future would be cheating; BERT fills blanks using both sides. 70B × 2 bytes ≈ 140 GB.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l11" data-level="11" data-short="Frontier"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 11</span><h2>Experts go deep in two areas and know the map of the rest</h2></div><label class="done"><input type="checkbox" data-done="11"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <h3 style="margin-top:0">Generative models</h3>
+  <div class="scroll"><table class="stack"><thead><tr><th>Model</th><th>Core idea</th><th>Trade-off</th></tr></thead><tbody>
+   <tr><td>Autoencoder</td><td>Compress, reconstruct</td><td>Compression, anomalies; not a true generator</td></tr>
+   <tr><td>VAE (2013)</td><td>Encode to a distribution; reconstruction + KL loss</td><td>Smooth latent space; blurry samples</td></tr>
+   <tr><td>GAN (2014)</td><td>Generator vs discriminator</td><td>Sharp, fast; unstable, mode collapse</td></tr>
+   <tr><td>Diffusion (2020)</td><td>Learn to remove noise step by step</td><td>State of the art for image, video, audio; many steps</td></tr>
+   <tr><td>Flow matching (2022)</td><td>Learn a velocity field from noise to data</td><td>Simpler, faster training; newer</td></tr>
+   <tr><td>Autoregressive</td><td>Predict next token</td><td>Text and code; sequential generation</td></tr>
+  </tbody></table></div>
+  <p><b>Diffusion in a paragraph:</b> add noise to real images over many steps until they are static; train a network to predict the added noise; to generate, start from static and repeatedly remove the predicted noise. Conditioning on text embeddings gives text-to-image.</p>
+  <h3>Self-supervised and multimodal</h3>
+  <p>Invent the task from the data: predict the next token, fill masked patches, or pull matching pairs together (contrastive learning). <b>CLIP</b> aligns images and captions, enabling zero-shot classification and vision-language models.</p>
+  <h3>Scaling, interpretability, open puzzles</h3>
+  <ul><li><b>Scaling laws</b>: loss falls as a smooth power law in parameters, data and compute. <b>Mixture of Experts</b> routes each token to 1–2 of many MLPs. Large runs combine data, FSDP/ZeRO, tensor and pipeline parallelism.</li><li><b>Interpretability</b>: probing, attribution, and mechanistic work such as induction heads and sparse autoencoders that split activations into readable features.</li><li><b>Puzzles</b>: double descent, the lottery ticket hypothesis, grokking, the neural tangent kernel, emergence versus metric artifacts.</li><li><b>Other branches</b>: graph neural networks, deep RL (DQN, PPO, AlphaZero), science (AlphaFold, weather models).</li></ul>
+  <p><b>Read papers:</b> abstract → figures → conclusion, then method. Re-implement the core in under 200 lines on a toy problem. One paper a week, one re-implementation a month.</p>
+ </div><div>
+  <div class="panel">
+   <h3 style="margin-top:0">LoRA calculator</h3>
+   <p class="small">Freeze W (d × k) and learn W + BA with B (d × r), A (r × k).</p>
+   <div class="grid3"><div><label class="small" for="ld">d</label><input type="number" id="ld" value="4096"></div><div><label class="small" for="lk">k</label><input type="number" id="lk" value="4096"></div><div><label class="small" for="lrk">rank r</label><input type="number" id="lrk" value="16"></div></div>
+   <div class="kv"><div><b id="lT">–</b><span>trainable</span></div><div><b id="lF">–</b><span>full matrix</span></div><div><b id="lP">–</b><span>share</span></div></div>
+  </div>
+  <h3>Adapting big models cheaply</h3>
+  <ul><li><b>RAG</b> first: retrieve documents with embeddings and put them in the prompt.</li><li><b>LoRA</b> and <b>QLoRA</b> (LoRA on a 4-bit base) fine-tune a 7B model on one consumer GPU; adapters are megabytes.</li><li><b>Quantization</b> to 8 or 4 bits (GPTQ, AWQ, GGUF) for 2–4× smaller inference.</li><li><b>Distillation</b>: a small student imitates a large teacher's probabilities.</li></ul>
+  <details class="check"><summary>Self-check: explain diffusion in three sentences. LoRA parameters for 4096 × 11008 at r = 8?</summary><div>8 × (4096 + 11008) = 120,832. Enter it in the calculator.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="l12" data-level="12" data-short="Production"><div class="wrap">
+ <div class="lvh"><div><span class="n">Level 12</span><h2>A trained model is a fifth of a working ML system; the rest is platform work</h2></div><label class="done"><input type="checkbox" data-done="12"> Mark done</label></div>
+ <div class="two"><div class="prose">
+  <h3 style="margin-top:0">The lifecycle</h3>
+  <ol class="steps"><li><b>Data</b>: versioned (DVC, lakeFS, immutable snapshots) and validated.</li><li><b>Experiments</b>: code commit, config, metrics, artifacts per run (MLflow, W&amp;B).</li><li><b>Registry</b>: staging → production with metrics attached.</li><li><b>Packaging</b>: TorchScript, ONNX or safetensors in an image with pinned CUDA.</li><li><b>Serving</b>: API with batching, autoscaling, health checks.</li><li><b>Monitoring</b>: system and model metrics, drift alerts.</li><li><b>Retraining</b> through the same pipeline (Kubeflow, Argo Workflows, Airflow).</li></ol>
+  <h3>GPUs on Kubernetes</h3>
+  <ul><li><b>NVIDIA GPU Operator</b>: drivers, device plugin, DCGM; pods request <code>nvidia.com/gpu: 1</code>.</li><li><b>Sharing</b>: MIG slices with isolation; time-slicing without.</li><li><b>Autoscaling</b>: CPU-based HPA is wrong for GPU inference. Scale on queue depth, in-flight requests or GPU utilization; KEDA fits, including scale-to-zero, but loading a 14 GB model takes tens of seconds.</li><li><b>Scheduling</b>: tainted GPU node pools, Kueue or Volcano for training queues, gang scheduling.</li><li><b>Weights</b>: cache on node-local disk or a shared volume, not pulled at every pod start.</li></ul>
+ </div><div>
+  <div class="scroll"><table class="stack"><thead><tr><th>Workload</th><th>Tools</th><th>Note</th></tr></thead><tbody>
+   <tr><td>LLM inference</td><td>vLLM, SGLang, TGI, TensorRT-LLM; llama.cpp locally</td><td>Continuous batching and paged KV cache multiply throughput</td></tr>
+   <tr><td>Vision, tabular, embeddings</td><td>Triton, TorchServe, BentoML, ONNX Runtime</td><td>Dynamic batching, many models per GPU</td></tr>
+   <tr><td>Kubernetes-native</td><td>KServe, Ray Serve, Seldon</td><td>Canary, scale-to-zero, model as a CRD</td></tr>
+   <tr><td>Batch scoring</td><td>Spark, Ray Data, Kubernetes Job</td><td>Cheapest; no latency target</td></tr>
+  </tbody></table></div>
+  <div class="scroll"><table class="stack"><thead><tr><th>Layer</th><th>Monitor</th></tr></thead><tbody>
+   <tr><td>Service</td><td>p50/p95/p99 latency, errors, requests per second</td></tr>
+   <tr><td>LLM</td><td>Time to first token, tokens/s per request, queue wait, KV-cache use</td></tr>
+   <tr><td>Hardware</td><td>GPU utilization, memory, temperature, power (DCGM → Prometheus → Grafana)</td></tr>
+   <tr><td>Model</td><td>Prediction distribution, input drift (PSI, KL), delayed accuracy, feedback</td></tr>
+  </tbody></table></div>
+  <p><b>Make inference cheaper:</b> quantize, bf16, compile (torch.compile, TensorRT), batch, cache shared prompt prefixes, distill. Track cost per 1,000 predictions or per million tokens.</p>
+  <p><b>Portfolio project:</b> serve a fine-tuned model with vLLM on Kubernetes via Helm and GitOps, autoscale on queue depth, export GPU and latency metrics to Grafana, and gate releases on an evaluation step in CI/CD.</p>
+  <details class="check"><summary>Self-check: why is CPU-based autoscaling a poor fit for GPU inference?</summary><div>Inference is GPU-bound, so CPU stays low while requests pile up. Scale on queue depth, in-flight requests or GPU utilization.</div></details>
+ </div></div>
+</div></section>
+
+<section class="band lv" id="projects"><div class="wrap two">
+ <div class="prose"><h2>Nine projects turn reading into skill</h2><p class="lead">Push each to GitHub with a README of what you learned. Ticks are saved in this browser.</p><div id="proj"></div></div>
+ <div><h2 style="font-size:26px">Before any long training run</h2><div id="sane"></div>
+  <h3>Sensible defaults</h3>
+  <div class="scroll"><table class="stack"><thead><tr><th>Choice</th><th>Default</th></tr></thead><tbody>
+   <tr><td>Hidden activation</td><td>ReLU (MLP/CNN), GELU or SiLU (Transformer)</td></tr>
+   <tr><td>Optimizer</td><td>AdamW, lr 1e-3 small models, 3e-4 Transformers, weight decay 0.01–0.1</td></tr>
+   <tr><td>Schedule</td><td>Warmup 1–5%, cosine decay</td></tr>
+   <tr><td>Batch size</td><td>32–256 to start</td></tr>
+   <tr><td>Normalization</td><td>BatchNorm (CNN), LayerNorm/RMSNorm (Transformer)</td></tr>
+   <tr><td>Regularization</td><td>Weight decay + augmentation, then dropout 0.1–0.3</td></tr>
+   <tr><td>Clipping, precision</td><td>Grad norm 1.0; bf16 mixed precision</td></tr>
+  </tbody></table></div>
+ </div>
+</div></section>
+
+<section class="band lv" id="cheat"><div class="wrap two">
+ <div><h2>Cheat sheet</h2>
+  <div class="eq">z = XW + b      a = f(z)      w ← w − η∇L
+softmax(z)ᵢ = e^zᵢ / Σⱼ e^zⱼ      L_CE = −ln p_correct
+dZ = dA ⊙ f′(Z)   dW = A_prevᵀdZ   db = ΣdZ   dA_prev = dZWᵀ
+softmax + CE:  dZ = p − y
+Attention = softmax(QKᵀ/√d_k + mask) V
+conv out = ⌊(W − K + 2P)/S⌋ + 1</div>
+ </div>
+ <div class="scroll"><table><thead><tr><th>Thing</th><th>Shape or count</th></tr></thead><tbody>
+  <tr><td>Tabular batch</td><td>(N, D)</td></tr><tr><td>Image batch (PyTorch)</td><td>(N, C, H, W)</td></tr><tr><td>Token batch</td><td>(N, T) → (N, T, d_model)</td></tr><tr><td>Dense params</td><td>in × out + out</td></tr><tr><td>Conv params</td><td>K·K·C_in·C_out + C_out</td></tr><tr><td>Transformer params</td><td>≈ 12·L·d² + vocab·d</td></tr><tr><td>Training FLOPs</td><td>≈ 6 · params · tokens</td></tr><tr><td>Weight memory</td><td>params × 2 bytes (bf16)</td></tr>
+ </tbody></table></div>
+</div></section>
+
+<section class="band lv" id="plan"><div class="wrap">
+ <h2>Twelve weeks at 8–10 hours a week gets you to fine-tuning and serving real models</h2>
+ <div class="scroll" style="margin-top:18px"><table class="stack"><thead><tr><th>Week</th><th>Levels</th><th>Main resource</th><th>Done when</th></tr></thead><tbody>
+  <tr><td>1</td><td>0–2</td><td>This playbook; 3Blue1Brown “Neural networks”</td><td>You can compute a neuron and explain XOR</td></tr>
+  <tr><td>2</td><td>3–4</td><td>3Blue1Brown backprop episodes</td><td>Backprop example done on paper from memory</td></tr>
+  <tr><td>3</td><td>5</td><td>NumPy code; Karpathy micrograd</td><td>Spirals near 100%; break-it experiments run</td></tr>
+  <tr><td>4</td><td>6</td><td>Karpathy “A Recipe for Training Neural Networks”</td><td>Recipe applied to MNIST in NumPy</td></tr>
+  <tr><td>5</td><td>7</td><td>PyTorch “Learn the Basics”</td><td>MNIST MLP at 97%+</td></tr>
+  <tr><td>6–7</td><td>8</td><td>CS231n notes; fast.ai</td><td>CIFAR-10 at 85%+; transfer-learning project</td></tr>
+  <tr><td>8</td><td>9</td><td>Karpathy makemore; Olah “Understanding LSTM Networks”</td><td>Character-level RNN generating text</td></tr>
+  <tr><td>9–10</td><td>10</td><td>“Let's build GPT” + nanoGPT; Alammar “The Illustrated Transformer”</td><td>Your own small GPT trained and sampled</td></tr>
+  <tr><td>11</td><td>11</td><td>Hugging Face course (Transformers, PEFT)</td><td>QLoRA fine-tune beats the base model on your task</td></tr>
+  <tr><td>12</td><td>12</td><td>vLLM and KServe docs; Huyen “Designing Machine Learning Systems”</td><td>Model served on Kubernetes with metrics and autoscaling</td></tr>
+ </tbody></table></div>
+ <div class="two" style="margin-top:18px">
+  <div><h3>Books</h3><ul><li><b>Prince, “Understanding Deep Learning”</b> (2023): modern, clear, free PDF. Best main text.</li><li><b>Nielsen, “Neural Networks and Deep Learning”</b>: free, gentle, great on backprop.</li><li><b>Zhang et al., “Dive into Deep Learning”</b>: free, runnable code.</li><li><b>Goodfellow, Bengio, Courville, “Deep Learning”</b>: classic theory reference.</li><li><b>Huyen, “Designing Machine Learning Systems”</b>: production.</li></ul></div>
+  <div><h3>Courses</h3><ul><li><b>Karpathy, “Neural Networks: Zero to Hero”</b>: micrograd to GPT, hands-on.</li><li><b>3Blue1Brown, “Neural networks”</b>: visual intuition.</li><li><b>fast.ai, “Practical Deep Learning for Coders”</b>: results first.</li><li><b>Stanford CS231n and CS224n</b>: university depth.</li></ul><p class="small">Stay current through arXiv (cs.LG, cs.CL, cs.CV), lab blogs and Hugging Face. One small re-implementation teaches more than ten papers skimmed.</p></div>
+ </div>
+</div></section>
+
+<footer class="band"><div class="wrap">Neural Networks Playbook · interactive edition. The trainer, backprop stepper and calculators run entirely in your browser.</div></footer>
+
+<script>
+const NN = (() => {
+  const rng = seed => { let s = seed % 2147483647; if (s <= 0) s += 2147483646; return () => (s = s * 16807 % 2147483647) / 2147483647; };
+  const gauss = r => { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); };
+  const sig = z => 1 / (1 + Math.exp(-z));
+  const ACT = {
+    relu: [z => (z > 0 ? z : 0), z => (z > 0 ? 1 : 0)],
+    tanh: [Math.tanh, z => { const t = Math.tanh(z); return 1 - t * t; }],
+    linear: [z => z, () => 1]
+  };
+  function dataset(kind, n, noise, seed) {
+    const r = rng(seed), X = [], Y = [];
+    for (let i = 0; i < n; i++) {
+      let x, y, c = i % 2;
+      if (kind === 'spiral') {
+        const t = Math.sqrt(r()) * 3 * Math.PI, s = c ? -1 : 1;
+        x = s * t * Math.cos(t) / (3 * Math.PI); y = s * t * Math.sin(t) / (3 * Math.PI);
+      } else if (kind === 'xor') {
+        x = (r() < 0.5 ? -1 : 1) * (0.1 + 0.75 * r()); y = (r() < 0.5 ? -1 : 1) * (0.1 + 0.75 * r());
+        c = x * y > 0 ? 0 : 1;
+      } else if (kind === 'circle') {
+        const a = r() * 2 * Math.PI, rad = c ? 0.6 + 0.35 * r() : 0.45 * Math.sqrt(r());
+        x = rad * Math.cos(a); y = rad * Math.sin(a);
+      } else {
+        const a = r() * Math.PI;
+        if (c) { x = (1 - Math.cos(a) - 0.5) * 0.75; y = (0.5 - Math.sin(a) - 0.25) * 0.75 + 0.1; }
+        else { x = (Math.cos(a) - 0.5) * 0.75; y = (Math.sin(a) - 0.25) * 0.75 + 0.1; }
+      }
+      X.push([x + noise * 0.12 * gauss(r), y + noise * 0.12 * gauss(r)]); Y.push(c);
+    }
+    return { X, Y };
+  }
+  function create(sizes, act, init, seed) {
+    const r = rng(seed), layers = [];
+    for (let l = 0; l < sizes.length - 1; l++) {
+      const nin = sizes[l], nout = sizes[l + 1], last = l === sizes.length - 2;
+      const std = init === 'zero' ? 0 : (act === 'relu' && !last ? Math.sqrt(2 / nin) : Math.sqrt(1 / nin));
+      const W = new Float64Array(nin * nout);
+      for (let k = 0; k < W.length; k++) W[k] = std * gauss(r);
+      const z = () => new Float64Array(nin * nout), zb = () => new Float64Array(nout);
+      layers.push({ nin, nout, W, b: zb(), gW: z(), gb: zb(), mW: z(), vW: z(), mb: zb(), vb: zb() });
+    }
+    return { layers, act, t: 0, steps: 0 };
+  }
+  function bufs(net) {
+    if (!net.buf) net.buf = { a: [null].concat(net.layers.map(L => new Float64Array(L.nout))), z: net.layers.map(L => new Float64Array(L.nout)), d: net.layers.map(L => new Float64Array(L.nin)) };
+    return net.buf;
+  }
+  function forward(net, x) {
+    const f = ACT[net.act][0], B = bufs(net), nl = net.layers.length;
+    let a = x; B.a[0] = x;
+    for (let l = 0; l < nl; l++) {
+      const L = net.layers[l], z = B.z[l], out = B.a[l + 1], W = L.W, no = L.nout, last = l === nl - 1;
+      for (let j = 0; j < no; j++) z[j] = L.b[j];
+      for (let i = 0; i < L.nin; i++) { const ai = a[i]; if (ai === 0) continue; const o = i * no; for (let j = 0; j < no; j++) z[j] += ai * W[o + j]; }
+      for (let j = 0; j < no; j++) out[j] = last ? sig(z[j]) : f(z[j]);
+      a = out;
+    }
+    return a[0];
+  }
+  function step(net, X, Y, lr) {
+    const g = ACT[net.act][1], n = X.length, B = bufs(net), nl = net.layers.length, top = new Float64Array(1);
+    net.layers.forEach(L => { L.gW.fill(0); L.gb.fill(0); });
+    let loss = 0, hit = 0;
+    for (let k = 0; k < n; k++) {
+      const p = forward(net, X[k]), y = Y[k];
+      loss -= y * Math.log(p + 1e-12) + (1 - y) * Math.log(1 - p + 1e-12);
+      if ((p > 0.5 ? 1 : 0) === y) hit++;
+      top[0] = p - y;
+      let delta = top;
+      for (let l = nl - 1; l >= 0; l--) {
+        const L = net.layers[l], ap = B.a[l], no = L.nout, W = L.W, gW = L.gW;
+        for (let i = 0; i < L.nin; i++) { const ai = ap[i], o = i * no; if (ai !== 0) for (let j = 0; j < no; j++) gW[o + j] += ai * delta[j]; }
+        for (let j = 0; j < no; j++) L.gb[j] += delta[j];
+        if (l > 0) {
+          const d = B.d[l], zp = B.z[l - 1];
+          for (let i = 0; i < L.nin; i++) { let s = 0; const o = i * no; for (let j = 0; j < no; j++) s += W[o + j] * delta[j]; d[i] = s * g(zp[i]); }
+          delta = d;
+        }
+      }
+    }
+    net.t++; net.steps++;
+    const b1 = 0.9, b2 = 0.999, c1 = 1 - b1 ** net.t, c2 = 1 - b2 ** net.t;
+    const upd = (P, G, M, V) => { for (let k = 0; k < P.length; k++) { const gk = G[k] / n; M[k] = b1 * M[k] + (1 - b1) * gk; V[k] = b2 * V[k] + (1 - b2) * gk * gk; P[k] -= lr * (M[k] / c1) / (Math.sqrt(V[k] / c2) + 1e-8); } };
+    net.layers.forEach(L => { upd(L.W, L.gW, L.mW, L.vW); upd(L.b, L.gb, L.mb, L.vb); });
+    return { loss: loss / n, acc: hit / n };
+  }
+  const params = sizes => sizes.slice(1).reduce((s, o, i) => s + sizes[i] * o + o, 0);
+  return { rng, gauss, sig, ACT, dataset, create, forward, step, params };
+})();
+
+{
+const $ = id => document.getElementById(id);
+const store = { get(k, d) { try { const v = localStorage.getItem('nnpb:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('nnpb:' + k, JSON.stringify(v)); } catch (e) {} } };
+const rgb = id => (getComputedStyle($(id)).color.match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).join(',');
+const fmt = (v, d = 3) => (Math.abs(v) >= 1e4 ? v.toExponential(2) : v.toFixed(d));
+const intf = v => Math.round(v).toLocaleString('en-US');
+const human = v => v >= 1e12 ? (v / 1e12).toFixed(2) + 'T' : v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : String(Math.round(v));
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.querySelectorAll('table.stack').forEach(tb => { const hs = [...tb.querySelectorAll('thead th')].map(h => h.textContent); tb.querySelectorAll('tbody tr').forEach(r => [...r.cells].forEach((c, i) => (c.dataset.l = hs[i] || ''))); });
+
+/* ---------- table of contents + progress ---------- */
+const lvls = [...document.querySelectorAll('section[data-level]')];
+$('toc').innerHTML = '<a href="#top">Trainer</a><a href="#how">Start</a>' + lvls.map(s => `<a href="#${s.id}" data-l="${s.dataset.level}">${s.dataset.level} ${s.dataset.short}</a>`).join('') + '<a href="#projects">Projects</a><a href="#cheat">Cheat sheet</a><a href="#plan">Plan</a><span class="meter"><i><b id="mBar"></b></i><span id="mTxt"></span></span>';
+let done = store.get('done', {});
+const paint = () => {
+  const n = Object.values(done).filter(Boolean).length;
+  $('mBar').style.width = (n / 13 * 100) + '%'; $('mTxt').textContent = n + ' / 13 levels';
+  document.querySelectorAll('#toc a[data-l]').forEach(a => a.classList.toggle('done', !!done[a.dataset.l]));
+};
+document.querySelectorAll('input[data-done]').forEach(cb => {
+  cb.checked = !!done[cb.dataset.done];
+  cb.addEventListener('change', () => { done[cb.dataset.done] = cb.checked; store.set('done', done); paint(); });
+});
+paint();
+const spy = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) document.querySelectorAll('#toc a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)); }), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('section[id]').forEach(s => spy.observe(s));
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($(b.dataset.copy).textContent); b.textContent = 'Copied'; }
+  catch (e) { const r = document.createRange(); r.selectNodeContents($(b.dataset.copy)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected, press Ctrl+C'; }
+  setTimeout(() => (b.textContent = 'Copy'), 1800);
+}));
+
+/* ---------- checklists ---------- */
+const checklist = (el, key, items) => {
+  const st = store.get(key, {});
+  $(el).innerHTML = items.map((t, i) => `<label class="chk"><input type="checkbox" data-i="${i}" ${st[i] ? 'checked' : ''}><span>${t}</span></label>`).join('');
+  $(el).addEventListener('change', e => { st[e.target.dataset.i] = e.target.checked; store.set(key, st); });
+};
+checklist('proj', 'proj', ['<b>Beginner:</b> the Level 2 neuron and Level 3 XOR network in plain Python, no NumPy.', '<b>Practitioner 1:</b> Level 5 NumPy network on spirals, then MNIST at 97%+.', '<b>Practitioner 2:</b> micrograd, a scalar autograd engine, training a small MLP.', '<b>Practitioner 3:</b> a PyTorch tabular model compared honestly with gradient-boosted trees.', '<b>Advanced 1:</b> CIFAR-10 CNN at 85%+, then fine-tune a pretrained ResNet on your own 5-class photos.', '<b>Advanced 2:</b> a character-level GPT with nanoGPT; plot its attention maps.', '<b>Expert 1:</b> QLoRA fine-tune of a 1–8B open model, evaluated against the base model.', '<b>Expert 2:</b> the Level 12 deployment: serve, autoscale, monitor, gate releases on evaluation.', '<b>Expert 3:</b> re-implement one paper, such as a small diffusion model on MNIST, and write up what matched.']);
+checklist('sane', 'sane', ['Initial loss ≈ ln(number of classes), e.g. 2.30 for 10.', 'The model overfits one small batch to near-zero loss.', 'Inputs look right when visualized after preprocessing.', 'No leakage: no duplicates across train, validation and test.', '<code>model.train()</code>, <code>model.eval()</code> and <code>zero_grad()</code> are in the right places.']);
+$('dbg').innerHTML = '<ol class="steps">' + ['<b>Overfit one batch</b> of 10–50 examples. If loss won\'t reach ~0, it is a bug, not tuning.', '<b>Check the loss at init</b>: about ln C for C balanced classes.', '<b>Visualize inputs</b> right before the model; many model bugs are data bugs.', '<b>Start from a simple baseline</b> and change one thing at a time.', '<b>Watch the curves</b>: train and validation loss, learning rate, gradient norm.', '<b>NaN loss</b>: lower lr, clip gradients, look for log(0) or NaNs in data.', '<b>Flat loss</b>: lr too small or large, dead ReLUs, misaligned labels, missing zero_grad.'].map(t => `<li>${t}</li>`).join('') + '</ol>';
+
+/* ---------- small svg chart helper ---------- */
+const plot = (box, fn) => { const draw = () => { const W = box.clientWidth, H = box.clientHeight; if (W && H) box.innerHTML = fn(W, H); }; const ro = new ResizeObserver(draw); ro.observe(box); return draw; };
+
+/* ---------- trainer ---------- */
+const T = { ds: 'spiral', act: 'relu', init: 'he', layers: 2, units: 24, lr: 0.03, noise: 1, running: !reduce, hist: [] };
+let data, net, last = { loss: NaN, acc: NaN };
+const lrFrom = v => 10 ** (-3 + 3 * v / 100), lrTo = lr => Math.round((Math.log10(lr) + 3) / 3 * 100);
+const sizes = () => [2].concat(Array(T.layers).fill(T.units), [1]);
+const rebuild = (newData) => {
+  if (newData || !data) data = NN.dataset(T.ds, 240, T.noise, 7);
+  net = NN.create(sizes(), T.act, T.init, 3 + Math.floor(Math.random() * 1000));
+  T.hist = []; last = { loss: NaN, acc: NaN };
+  $('rPar').textContent = intf(NN.params(sizes()));
+  syncUI(); drawBoard(); drawSpark(); readouts();
+};
+const syncUI = () => {
+  $('act').value = T.act; $('init').value = T.init;
+  $('layers').value = T.layers; $('layersO').textContent = T.layers;
+  $('units').value = T.units; $('unitsO').textContent = T.units;
+  $('lr').value = lrTo(T.lr); $('lrO').textContent = T.lr >= 0.1 ? T.lr.toFixed(2) : T.lr.toFixed(3);
+  $('noise').value = T.noise; $('noiseO').textContent = T.noise;
+  document.querySelectorAll('#dsSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.ds === T.ds));
+  $('play').textContent = T.running ? 'Pause' : 'Train';
+};
+const readouts = () => {
+  $('rStep').textContent = intf(net.steps);
+  $('rLoss').textContent = isNaN(last.loss) ? '–' : last.loss.toFixed(3);
+  $('rAcc').textContent = isNaN(last.acc) ? '–' : Math.round(last.acc * 100) + '%';
+  let v = 'Loss over time. Orange points are class 1, dark points class 0; shading shows what the network predicts everywhere.';
+  if (net.steps > 300) {
+    if (T.init === 'zero' && Math.abs(last.loss - 0.693) < 0.01) v = 'Stuck at loss 0.693 = ln 2: zero weights pass no gradient back, so the network can only guess.';
+    else if (T.lr >= 0.5 && last.acc < 0.8) v = 'Learning rate too high: every step overshoots, and the network never settles.';
+    else if (T.act === 'linear') v = 'Without an activation the whole stack is one linear function, so the boundary stays a straight line.';
+    else if (T.units <= 4 && last.acc < 0.9) v = 'Too few neurons to bend the boundary enough: underfitting.';
+    else if (last.acc >= 0.97) v = 'Converged: the hidden layers have bent the space until a simple boundary separates the classes.';
+  }
+  $('verdict').textContent = v;
+};
+const cv = $('cv'), ctx = cv.getContext('2d');
+const drawBoard = () => {
+  const W = cv.clientWidth, H = cv.clientHeight, dpr = devicePixelRatio || 1;
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const A = rgb('swA'), B = rgb('swB'), bg = rgb('swBg'), s = Math.min(W, H) / 2.5, cell = Math.max(6, Math.ceil(Math.max(W, H) / 64));
+  ctx.fillStyle = `rgb(${bg})`; ctx.fillRect(0, 0, W, H);
+  const pt = [0, 0];
+  for (let py = 0; py < H; py += cell) for (let px = 0; px < W; px += cell) {
+    pt[0] = (px + cell / 2 - W / 2) / s; pt[1] = -(py + cell / 2 - H / 2) / s;
+    const p = NN.forward(net, pt), k = Math.abs(p - 0.5) * 2;
+    ctx.fillStyle = `rgba(${p > 0.5 ? A : B},${0.04 + 0.3 * k})`; ctx.fillRect(px, py, cell, cell);
+  }
+  data.X.forEach((x, i) => {
+    ctx.beginPath(); ctx.arc(W / 2 + x[0] * s, H / 2 - x[1] * s, 4.2, 0, 7);
+    ctx.fillStyle = `rgb(${data.Y[i] ? A : B})`; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = `rgb(${bg})`; ctx.stroke();
+  });
+};
+const spark = $('spark');
+const drawSpark = plot(spark, (W, H) => {
+  const h = T.hist; if (h.length < 2) return `<svg viewBox="0 0 ${W} ${H}"><line x1="0" y1="${H - 1}" x2="${W}" y2="${H - 1}" stroke="var(--line)"/></svg>`;
+  const mx = Math.max(0.7, ...h.filter(isFinite)), n = h.length, stepN = Math.max(1, Math.floor(n / W));
+  let d = ''; for (let i = 0; i < n; i += stepN) { const v = isFinite(h[i]) ? Math.min(h[i], mx) : mx; d += (d ? 'L' : 'M') + (i / (n - 1) * (W - 2) + 1).toFixed(1) + ' ' + (H - 4 - v / mx * (H - 12)).toFixed(1); }
+  return `<svg viewBox="0 0 ${W} ${H}"><line x1="0" y1="${H - 1}" x2="${W}" y2="${H - 1}" stroke="var(--line)"/><path d="${d}" fill="none" stroke="var(--acc)" stroke-width="2"/><text x="${W - 4}" y="12" text-anchor="end" font-size="12" fill="var(--muted)">max ${mx.toFixed(2)}</text></svg>`;
+});
+const train = n => { for (let i = 0; i < n; i++) { last = NN.step(net, data.X, data.Y, T.lr); T.hist.push(last.loss); } if (T.hist.length > 6000) T.hist = T.hist.filter((_, i) => i % 2 === 0); };
+let frame = 0;
+const loop = () => {
+  if (T.running) {
+    train(T.units * T.layers > 48 ? 3 : 6);
+    if (net.steps >= 20000) { T.running = false; syncUI(); }
+    drawBoard(); readouts(); if (++frame % 4 === 0) drawSpark();
+  }
+  requestAnimationFrame(loop);
+};
+$('play').addEventListener('click', () => { T.running = !T.running; syncUI(); });
+$('stepB').addEventListener('click', () => { train(10); drawBoard(); readouts(); drawSpark(); });
+$('reset').addEventListener('click', () => rebuild(false));
+document.querySelectorAll('#dsSeg button').forEach(b => b.addEventListener('click', () => { T.ds = b.dataset.ds; rebuild(true); }));
+$('act').addEventListener('change', e => { T.act = e.target.value; rebuild(false); });
+$('init').addEventListener('change', e => { T.init = e.target.value; rebuild(false); });
+$('layers').addEventListener('input', e => { T.layers = +e.target.value; rebuild(false); });
+$('units').addEventListener('input', e => { T.units = +e.target.value; rebuild(false); });
+$('lr').addEventListener('input', e => { T.lr = +lrFrom(+e.target.value).toPrecision(2); syncUI(); });
+$('noise').addEventListener('input', e => { T.noise = +e.target.value; rebuild(true); });
+const P = { good: {}, zero: { init: 'zero' }, hot: { lr: 1 }, lin: { act: 'linear' }, tiny: { layers: 1, units: 3 } };
+document.querySelectorAll('#presets button').forEach(b => b.addEventListener('click', () => {
+  Object.assign(T, { ds: 'spiral', act: 'relu', init: 'he', layers: 2, units: 24, lr: 0.03, noise: 1 }, P[b.dataset.p]);
+  T.running = true; rebuild(true);
+}));
+const roBoard = new ResizeObserver(drawBoard); roBoard.observe(cv);
+rebuild(true); train(250); readouts(); drawBoard(); drawSpark(); syncUI();
+requestAnimationFrame(loop);
+
+/* ---------- level 1: shape checker ---------- */
+const shapeCheck = () => {
+  const p = s => s.split(/[,x×\s]+/).filter(Boolean).map(Number);
+  const a = p($('sa').value), b = p($('sb').value);
+  if (a.length !== 2 || b.length !== 2 || [...a, ...b].some(v => !Number.isInteger(v) || v < 1)) { $('sr').textContent = '?'; $('sm').textContent = 'Enter two whole numbers per shape, like 32, 784.'; return; }
+  if (a[1] !== b[0]) { $('sr').textContent = 'Error'; $('sm').textContent = `Inner sizes differ: ${a[1]} ≠ ${b[0]}. Transpose one side or fix the layer size.`; return; }
+  $('sr').textContent = `(${a[0]}, ${b[1]})`; $('sm').textContent = `${intf(a[0] * b[1])} dot products, each of length ${a[1]}: ${human(a[0] * b[1] * a[1])} multiply-adds.`;
+};
+['sa', 'sb'].forEach(id => $(id).addEventListener('input', shapeCheck)); shapeCheck();
+
+/* ---------- level 2: neuron ---------- */
+const F = { sigmoid: [NN.sig, 0, 1], relu: [z => Math.max(0, z), 0, 6], tanh: [Math.tanh, -1, 1], step: [z => (z >= 0 ? 1 : 0), 0, 1] };
+let nz = 0;
+const actDraw = plot($('actFig'), (W, H) => {
+  const [f, lo, hi] = F[$('nf').value], m = 28, X = z => m + (z + 6) / 12 * (W - 2 * m), Y = v => H - m - (v - lo) / (hi - lo) * (H - 2 * m);
+  let d = ''; for (let i = 0; i <= 240; i++) { const z = -6 + 12 * i / 240; d += (i ? 'L' : 'M') + X(z).toFixed(1) + ' ' + Y(f(z)).toFixed(1); }
+  const zc = Math.max(-6, Math.min(6, nz)), a = f(nz);
+  return `<svg viewBox="0 0 ${W} ${H}"><line x1="${m}" x2="${W - m}" y1="${Y(Math.max(lo, 0))}" y2="${Y(Math.max(lo, 0))}" stroke="var(--line)"/><line x1="${X(0)}" x2="${X(0)}" y1="${m / 2}" y2="${H - m}" stroke="var(--line)"/><path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2"/><line x1="${X(zc)}" x2="${X(zc)}" y1="${Y(Math.min(hi, Math.max(lo, a)))}" y2="${H - m}" stroke="var(--acc)" stroke-dasharray="4 4"/><circle cx="${X(zc)}" cy="${Y(Math.min(hi, Math.max(lo, a)))}" r="6" fill="var(--acc)"/><text x="${X(0)}" y="${H - 8}" text-anchor="middle" font-size="13" fill="var(--muted)">z = 0</text><text x="${X(-6)}" y="${H - 8}" font-size="13" fill="var(--muted)">−6</text><text x="${X(6) - 14}" y="${H - 8}" font-size="13" fill="var(--muted)">6</text><text x="${X(0) + 6}" y="${m / 2 + 10}" font-size="13" fill="var(--muted)">a = f(z)</text></svg>`;
+});
+const neuron = () => {
+  const x = [0, 1, 2].map(i => +$('nx' + i).value), w = [0, 1, 2].map(i => +$('nw' + i).value), b = +$('nb').value;
+  ['nx0', 'nx1', 'nx2', 'nw0', 'nw1', 'nw2', 'nb'].forEach(id => ($(id + 'O').textContent = (+$(id).value).toFixed(1)));
+  nz = x.reduce((s, v, i) => s + v * w[i], b);
+  const a = F[$('nf').value][0](nz), name = $('nf').selectedOptions[0].textContent.split(' ')[0];
+  $('neq').textContent = `z = ${x.map((v, i) => `${w[i].toFixed(1)}·${v.toFixed(1)}`).join(' + ')} + (${b.toFixed(1)}) = ${nz.toFixed(2)}\na = ${name}(${nz.toFixed(2)}) = ${a.toFixed(3)}${$('nf').value === 'sigmoid' ? `  →  ${Math.round(a * 100)}% go running` : ''}`;
+  actDraw();
+};
+['nx0', 'nx1', 'nx2', 'nw0', 'nw1', 'nw2', 'nb', 'nf'].forEach(id => $(id).addEventListener('input', neuron)); neuron();
+
+/* ---------- level 3: xor + param counter ---------- */
+const xs = [0, 0];
+const xor = () => {
+  const h1 = Math.max(0, xs[0] + xs[1]), h2 = Math.max(0, xs[0] + xs[1] - 1), y = h1 - 2 * h2;
+  $('x1b').textContent = 'x₁ = ' + xs[0]; $('x2b').textContent = 'x₂ = ' + xs[1];
+  $('x1b').setAttribute('aria-pressed', !!xs[0]); $('x2b').setAttribute('aria-pressed', !!xs[1]);
+  $('h1n').textContent = 'h₁ = ' + h1; $('h2n').textContent = 'h₂ = ' + h2; $('yn').textContent = 'y = ' + y;
+  $('h1n').classList.toggle('on', h1 > 0); $('h2n').classList.toggle('on', h2 > 0); $('yn').classList.toggle('on', y > 0);
+  [...$('xorT').tBodies[0].rows].forEach((r, i) => r.classList.toggle('cur', i === xs[0] * 2 + xs[1]));
+};
+$('x1b').addEventListener('click', () => { xs[0] ^= 1; xor(); }); $('x2b').addEventListener('click', () => { xs[1] ^= 1; xor(); }); xor();
+const pc = () => {
+  const s = $('pc').value.split(/[,\s→>-]+/).filter(Boolean).map(Number);
+  if (s.length < 2 || s.some(v => !Number.isInteger(v) || v < 1)) { $('pcT').innerHTML = '<tbody><tr><td>Enter at least two whole numbers, like 784, 128, 10.</td></tr></tbody>'; return; }
+  const rows = s.slice(1).map((o, i) => `<tr><td>${i === s.length - 2 ? 'Output' : 'Hidden ' + (i + 1)}</td><td>(${s[i]}, ${o})</td><td class="num">${intf(s[i] * o + o)}</td></tr>`).join('');
+  $('pcT').innerHTML = `<thead><tr><th>Layer</th><th>W shape</th><th class="num">Params</th></tr></thead><tbody>${rows}<tr><td><b>Total</b></td><td></td><td class="num"><b>${intf(NN.params(s))}</b></td></tr></tbody>`;
+};
+$('pc').addEventListener('input', pc); pc();
+
+/* ---------- level 4: gradient descent ---------- */
+const GD = { w: -3, path: [-3] };
+const Lf = w => (w - 2) ** 2 + 1;
+const gdDraw = plot($('gdFig'), (W, H) => {
+  const m = 26, X = w => m + (w + 4) / 12 * (W - 2 * m), Y = v => H - m - Math.min(v, 40) / 40 * (H - 2 * m);
+  let d = ''; for (let i = 0; i <= 200; i++) { const w = -4 + 12 * i / 200; d += (i ? 'L' : 'M') + X(w).toFixed(1) + ' ' + Y(Lf(w)).toFixed(1); }
+  const pts = GD.path.filter(w => w >= -4 && w <= 8);
+  const trail = pts.map((w, i) => (i ? 'L' : 'M') + X(w).toFixed(1) + ' ' + Y(Lf(w)).toFixed(1)).join('');
+  const dots = pts.map((w, i) => `<circle cx="${X(w)}" cy="${Y(Lf(w))}" r="${i === pts.length - 1 ? 6 : 3}" fill="var(--acc)" opacity="${i === pts.length - 1 ? 1 : 0.5}"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}"><line x1="${m}" x2="${W - m}" y1="${H - m}" y2="${H - m}" stroke="var(--line)"/><path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2"/><path d="${trail}" fill="none" stroke="var(--acc)" stroke-width="1" opacity=".6"/>${dots}<text x="${X(2)}" y="${H - 8}" text-anchor="middle" font-size="13" fill="var(--muted)">w = 2 (minimum)</text><text x="${m}" y="${H - 8}" font-size="13" fill="var(--muted)">−4</text><text x="${W - m}" y="${H - 8}" text-anchor="end" font-size="13" fill="var(--muted)">8</text></svg>`;
+});
+const gdMsg = () => {
+  const lr = +$('gdlr').value, w = GD.w; $('gdlrO').textContent = lr.toFixed(2);
+  const near = v => Math.abs(lr - v) < 1e-9;
+  let s = near(0.5) ? 'jumps straight to the minimum in one step' : lr < 0.5 ? 'descends smoothly' : near(1) ? 'bounces between two points forever' : lr < 1 ? 'zig-zags across the valley but converges' : 'diverges: each step overshoots further';
+  $('gdMsg').textContent = `Step ${GD.path.length - 1}: w = ${fmt(w)}, L = ${fmt(Lf(w))}. At η = ${lr.toFixed(2)} this ${s}. Each step multiplies the distance to the minimum by |1 − 2η|.`;
+};
+const gdStep = n => { const lr = +$('gdlr').value; for (let i = 0; i < n && Math.abs(GD.w) < 1e6; i++) { GD.w -= lr * 2 * (GD.w - 2); GD.path.push(GD.w); } gdDraw(); gdMsg(); };
+$('gdStep').addEventListener('click', () => gdStep(1)); $('gdRun').addEventListener('click', () => gdStep(20));
+$('gdReset').addEventListener('click', () => { GD.w = -3; GD.path = [-3]; gdDraw(); gdMsg(); });
+$('gdlr').addEventListener('input', () => { GD.w = -3; GD.path = [-3]; gdDraw(); gdMsg(); }); gdMsg();
+
+/* ---------- level 4: backprop stepper ---------- */
+let bpShown = 0, bpRows = [], bpNew = null, bpLosses = [];
+const bpCalc = () => {
+  const g = id => +$(id).value, x = g('bx'), t = g('bt'), w1 = g('bw1'), b1 = g('bb1'), w2 = g('bw2'), b2 = g('bb2'), lr = g('blr');
+  const z1 = w1 * x + b1, h = NN.sig(z1), y = w2 * h + b2, L = 0.5 * (y - t) ** 2;
+  const dy = y - t, dw2 = dy * h, db2 = dy, dh = dy * w2, dz1 = dh * h * (1 - h), dw1 = dz1 * x, db1 = dz1;
+  bpNew = { bw1: w1 - lr * dw1, bb1: b1 - lr * db1, bw2: w2 - lr * dw2, bb2: b2 - lr * db2 };
+  const h2 = NN.sig(bpNew.bw1 * x + bpNew.bb1), L2 = 0.5 * (bpNew.bw2 * h2 + bpNew.bb2 - t) ** 2;
+  if (!bpLosses.length) bpLosses = [L];
+  const f = v => v.toFixed(4);
+  bpRows = [
+    ['Forward', 'z₁ = w₁x + b₁', f(z1)], ['Forward', 'h = σ(z₁)', f(h)], ['Forward', 'y = w₂h + b₂', f(y)], ['Forward', 'L = ½(y − t)²', f(L)],
+    ['Backward', '∂L/∂y = y − t', f(dy)], ['Backward', '∂L/∂w₂ = ∂L/∂y · h', f(dw2)], ['Backward', '∂L/∂b₂ = ∂L/∂y', f(db2)], ['Backward', '∂L/∂h = ∂L/∂y · w₂', f(dh)],
+    ['Backward', '∂L/∂z₁ = ∂L/∂h · h(1 − h)', f(dz1)], ['Backward', '∂L/∂w₁ = ∂L/∂z₁ · x', f(dw1)], ['Backward', '∂L/∂b₁ = ∂L/∂z₁', f(db1)],
+    ['Update', 'w ← w − η · gradient', `w₁ ${f(bpNew.bw1)}, b₁ ${f(bpNew.bb1)}, w₂ ${f(bpNew.bw2)}, b₂ ${f(bpNew.bb2)}`], ['Check', 'new L after update', f(L2)]
+  ];
+  $('bpT').innerHTML = '<tbody>' + bpRows.map((r, i) => `<tr class="${i >= bpShown ? 'hide' : ''}${i === bpShown - 1 ? ' new' : ''}"><td class="ph">${r[0]}</td><td>${r[1]}</td><td class="num">${r[2]}</td></tr>`).join('') + '</tbody>';
+  $('bpNext').textContent = bpShown >= bpRows.length ? 'Done' : 'Next line';
+  $('bpHist').textContent = 'Loss after each applied update: ' + bpLosses.map(v => v.toFixed(4)).join(' → ');
+};
+$('bpNext').addEventListener('click', () => { bpShown = Math.min(bpRows.length, bpShown + 1); bpCalc(); });
+$('bpAll').addEventListener('click', () => { bpShown = bpRows.length; bpCalc(); });
+$('bpApply').addEventListener('click', () => { Object.entries(bpNew).forEach(([k, v]) => ($(k).value = +v.toFixed(4))); bpShown = 0; bpCalc(); bpLosses.push(+bpRows[3][2]); bpCalc(); });
+$('bpReset').addEventListener('click', () => { Object.entries({ bx: 1, bt: 1, blr: 0.1, bw1: 0.5, bb1: 0, bw2: 2, bb2: 0 }).forEach(([k, v]) => ($(k).value = v)); bpShown = 0; bpLosses = []; bpCalc(); });
+['bx', 'bt', 'blr', 'bw1', 'bb1', 'bw2', 'bb2'].forEach(id => $(id).addEventListener('input', () => { bpLosses = []; bpCalc(); }));
+bpShown = 4; bpCalc();
+
+/* ---------- level 6: diagnoser ---------- */
+const diag = () => {
+  const tr = $('dTr').value, va = $('dVa').value;
+  const r = tr === 'High' ? ['Underfitting', 'Bigger model, train longer, raise the learning rate, loosen regularization. Fix this before worrying about validation.']
+    : va === 'High' ? ['Overfitting', 'More data or augmentation, weight decay, dropout, early stopping, or a smaller model.']
+    : ['Healthy', 'Ship it, then try to beat it: better data, a stronger architecture, longer training with a good schedule.'];
+  $('dOut').textContent = r[0]; $('dDo').textContent = r[1];
+};
+['dTr', 'dVa'].forEach(id => $(id).addEventListener('change', diag)); diag();
+
+/* ---------- level 8: convolution ---------- */
+const img = store.get('img', null) || Array.from({ length: 64 }, (_, i) => { const r = i >> 3, c = i & 7; return (r >= 2 && r <= 5 && c >= 2 && c <= 5) ? 1 : 0; });
+const K = { v: [1, 0, -1, 1, 0, -1, 1, 0, -1], h: [1, 1, 1, 0, 0, 0, -1, -1, -1], blur: Array(9).fill(1 / 9), sharp: [0, -1, 0, -1, 5, -1, 0, -1, 0] };
+let kern = 'v', hov = -1;
+const convOut = () => { const o = []; for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) { let s = 0; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) s += img[(r + i) * 8 + c + j] * K[kern][i * 3 + j]; o.push(s); } return o; };
+const conv = () => {
+  const o = convOut(), mx = Math.max(1e-9, ...o.map(Math.abs)), A = rgb('swA'), B = rgb('swB');
+  const hr = hov >= 0 ? Math.floor(hov / 6) : -9, hc = hov >= 0 ? hov % 6 : -9;
+  $('cin').innerHTML = img.map((v, i) => { const r = i >> 3, c = i & 7, inP = r >= hr && r < hr + 3 && c >= hc && c < hc + 3; return `<span data-i="${i}" class="${inP ? 'hl' : ''}" style="background:${v ? `rgb(${B})` : 'var(--bg)'}" aria-label="pixel ${r},${c}"></span>`; }).join('');
+  $('cout').innerHTML = o.map((v, i) => `<span data-o="${i}" class="${i === hov ? 'hl' : ''}" style="background:rgba(${v >= 0 ? A : B},${(0.08 + 0.85 * Math.abs(v) / mx).toFixed(2)});color:${Math.abs(v) / mx > 0.5 ? (v >= 0 ? '#fff' : `rgb(${rgb('swBg')})`) : 'var(--ink)'}">${Math.abs(v) < 0.005 ? '0' : v.toFixed(Number.isInteger(v) ? 0 : 1)}</span>`).join('');
+  document.querySelectorAll('#kSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === kern));
+  const kk = K[kern].map(v => (Number.isInteger(v) ? String(v) : v.toFixed(2)).padStart(5)).join('');
+  if (hov >= 0) { const terms = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const p = img[(hr + i) * 8 + hc + j], k = K[kern][i * 3 + j]; if (p && k) terms.push(Number.isInteger(k) ? k : k.toFixed(2)); } $('cMsg').textContent = `Output (${hr}, ${hc}) = Σ pixel × kernel over the outlined patch\n= ${terms.length ? terms.join(' + ') : '0'} = ${o[hov].toFixed(2)}`; }
+  else $('cMsg').textContent = 'Kernel:\n' + kk.slice(0, 15) + '\n' + kk.slice(15, 30) + '\n' + kk.slice(30);
+};
+$('cin').addEventListener('click', e => { const i = e.target.dataset.i; if (i === undefined) return; img[i] ^= 1; store.set('img', img); conv(); });
+['mouseover', 'click'].forEach(ev => $('cout').addEventListener(ev, e => { const i = e.target.dataset.o; if (i === undefined) return; hov = +i; conv(); }));
+$('cout').addEventListener('mouseleave', () => { hov = -1; conv(); });
+document.querySelectorAll('#kSeg button').forEach(b => b.addEventListener('click', () => { kern = b.dataset.k; conv(); })); conv();
+const ccalc = () => {
+  const [w, k, p, s, ci, co] = ['cW', 'cK', 'cP', 'cS', 'cCi', 'cCo'].map(id => +$(id).value);
+  const out = Math.floor((w - k + 2 * p) / s) + 1;
+  $('cOut').textContent = s > 0 && out > 0 ? `${out} × ${out} × ${co}` : 'invalid'; $('cPar').textContent = intf(k * k * ci * co + co);
+};
+['cW', 'cK', 'cP', 'cS', 'cCi', 'cCo'].forEach(id => $(id).addEventListener('input', ccalc)); ccalc();
+
+/* ---------- level 9: softmax temperature ---------- */
+const smx = () => {
+  const sc = [0, 1, 2].map(i => +$('sc' + i).value), t = +$('temp').value, vals = [10, 20, 30], names = ['cat', 'sat', 'mat'];
+  ['sc0', 'sc1', 'sc2', 'temp'].forEach(id => ($(id + 'O').textContent = (+$(id).value).toFixed(1)));
+  const e = sc.map(v => Math.exp(v / t)), S = e.reduce((a, b) => a + b, 0), p = e.map(v => v / S);
+  $('smBars').innerHTML = p.map((v, i) => `<div><span>${names[i]}</span><i style="width:${(v * 100).toFixed(1)}%"></i><em>${v.toFixed(3)}</em></div>`).join('');
+  $('smOut').textContent = p.reduce((s, v, i) => s + v * vals[i], 0).toFixed(2);
+};
+['sc0', 'sc1', 'sc2', 'temp'].forEach(id => $(id).addEventListener('input', smx)); smx();
+
+/* ---------- level 10: attention heatmap ---------- */
+const toks = ['The', 'cat', 'sat', 'on', 'the', 'mat'];
+let causal = true, seed = 11, row = 5;
+const attn = () => {
+  const r = NN.rng(seed), d = 8, X = toks.map(() => Array.from({ length: d }, () => NN.gauss(r)));
+  const Wq = Array.from({ length: d * d }, () => NN.gauss(r) / Math.sqrt(d)), Wk = Array.from({ length: d * d }, () => NN.gauss(r) / Math.sqrt(d));
+  const proj = (x, Wm) => Array.from({ length: d }, (_, j) => x.reduce((s, v, i) => s + v * Wm[i * d + j], 0));
+  const Q = X.map(x => proj(x, Wq)), Kk = X.map(x => proj(x, Wk));
+  const Wt = Q.map((q, i) => { const sc = Kk.map((k, j) => (causal && j > i) ? -Infinity : q.reduce((s, v, n) => s + v * k[n], 0) / Math.sqrt(d)); const m = Math.max(...sc), e = sc.map(v => Math.exp(v - m)), S = e.reduce((a, b) => a + b, 0); return e.map(v => v / S); });
+  const A = rgb('swA');
+  $('attn').innerHTML = '<span></span>' + toks.map(t => `<span class="lab" style="justify-content:center">${t}</span>`).join('') + Wt.map((rw, i) => `<span class="lab">${toks[i]}</span>` + rw.map((v, j) => `<span data-r="${i}" style="background:rgba(${A},${(0.05 + 0.9 * v).toFixed(2)});${i === row ? 'outline:2px solid var(--ink);outline-offset:-2px' : ''};color:${v > 0.55 ? '#fff' : 'var(--ink)'}">${v < 0.005 ? (causal && j > i ? '–' : '0') : v.toFixed(2)}</span>`).join('')).join('');
+  const w = Wt[row]; $('attnMsg').textContent = `“${toks[row]}” mixes the values of ${toks.map((t, j) => w[j] > 0.005 ? `${t} ${(w[j] * 100).toFixed(0)}%` : null).filter(Boolean).join(', ')}. ${causal ? 'Masked cells (–) are future tokens it may not see.' : 'Mask off: every token sees the whole sentence, as in BERT.'}`;
+  $('maskB').textContent = causal ? 'Causal mask on' : 'Causal mask off'; $('maskB').setAttribute('aria-pressed', causal);
+};
+$('attn').addEventListener('click', e => { const r = e.target.dataset.r; if (r !== undefined) { row = +r; attn(); } });
+$('maskB').addEventListener('click', () => { causal = !causal; attn(); });
+$('reseed').addEventListener('click', () => { seed = (seed * 7 + 13) % 9973; attn(); }); attn();
+
+/* ---------- level 10 + 11: calculators ---------- */
+const tcalc = () => { const L = +$('tL').value, d = +$('tD').value, b = +$('tP').value, p = 12 * L * d * d; $('tPar').textContent = human(p); $('tMem').textContent = (p * b / 1e9).toFixed(1) + ' GB'; $('tTrain').textContent = (p * 16 / 1e9).toFixed(0) + ' GB'; };
+['tL', 'tD', 'tP'].forEach(id => $(id).addEventListener('input', tcalc)); tcalc();
+const lcalc = () => { const d = +$('ld').value, k = +$('lk').value, r = +$('lrk').value, t = r * (d + k), f = d * k; $('lT').textContent = intf(t); $('lF').textContent = human(f); $('lP').textContent = f ? (t / f * 100).toFixed(2) + '%' : '–'; };
+['ld', 'lk', 'lrk'].forEach(id => $(id).addEventListener('input', lcalc)); lcalc();
+
+/* ---------- redraw colours when theme changes ---------- */
+const themeWatch = new MutationObserver(() => { drawBoard(); conv(); attn(); });
+themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { drawBoard(); conv(); attn(); });
+}
+</script>
+</body>
+</html>
